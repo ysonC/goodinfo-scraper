@@ -17,10 +17,10 @@ import (
 const (
 	downloadDir = "output_stock"
 	inputFile   = "input_stock/stock_numbers.txt"
-	maxWorkers  = 5 // Controls concurrency level (e.g., 5 workers)
+	maxWorkers  = 10 // Controls concurrency level
 )
 
-// Read stock numbers from a file
+// readStockNumbersFromFile reads stock numbers from a file.
 func readStockNumbersFromFile(filePath string) ([]string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -42,11 +42,25 @@ func readStockNumbersFromFile(filePath string) ([]string, error) {
 	return stockNumbers, nil
 }
 
-// Download stock data (Worker function)
+// isStockDataUpToDate checks if the CSV file for the given stock exists and if its modification time is today.
+func isStockDataUpToDate(stockNumber string) bool {
+	filePath := filepath.Join(downloadDir, stockNumber+".csv")
+	fi, err := os.Stat(filePath)
+	if err != nil {
+		// File doesn't exist.
+		return false
+	}
+	now := time.Now()
+	modTime := fi.ModTime()
+	// Check if file was modified on the same day.
+	return now.Year() == modTime.Year() && now.YearDay() == modTime.YearDay()
+}
+
+// downloadStockData downloads and saves data for one stock.
 func downloadStockData(stockNumber string, pw *playwright.Playwright, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	// Launch a headless browser
+	// Launch a headless browser.
 	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
 		Headless: playwright.Bool(true),
 		Args:     []string{"--no-sandbox", "--disable-setuid-sandbox"},
@@ -57,21 +71,21 @@ func downloadStockData(stockNumber string, pw *playwright.Playwright, wg *sync.W
 	}
 	defer browser.Close()
 
-	// Create new page
+	// Create a new page.
 	page, err := browser.NewPage()
 	if err != nil {
 		log.Printf("[ERROR] Failed to open page for %s: %v", stockNumber, err)
 		return
 	}
 
-	// Construct stock URL
+	// Construct stock URL.
 	url := fmt.Sprintf(
 		"https://goodinfo.tw/tw/ShowK_ChartFlow.asp?RPT_CAT=PER&STEP=DATA&STOCK_ID=%s&CHT_CAT=WEEK&PRICE_ADJ=F&START_DT=2001-03-28&END_DT=%s",
 		stockNumber,
 		time.Now().Format("2006-01-02"),
 	)
 
-	// Visit the URL
+	// Visit the URL.
 	_, err = page.Goto(url, playwright.PageGotoOptions{
 		WaitUntil: playwright.WaitUntilStateLoad,
 	})
@@ -85,7 +99,7 @@ func downloadStockData(stockNumber string, pw *playwright.Playwright, wg *sync.W
 	err = tableLocator.WaitFor()
 	if err != nil {
 		log.Printf("[ERROR] Table not found for stock %s", stockNumber)
-		// Even if the locator isn't found, we try to continue.
+		// Even if not found, continue to attempt extraction.
 	}
 
 	// Extract the inner HTML of the table container.
@@ -105,42 +119,37 @@ func downloadStockData(stockNumber string, pw *playwright.Playwright, wg *sync.W
 	// Save to CSV with header.
 	outputFilePath := filepath.Join(downloadDir, stockNumber+".csv")
 	saveToCSV(data, outputFilePath)
-
 	log.Printf("[SUCCESS] Stock %s data saved.", stockNumber)
 }
 
 // extractTableData parses the provided HTML (assumed to be a table) and returns a 2D slice.
-// It skips the first (header) row and any row with a Date (first cell) ending with "W53".
+// It wraps the fragment in a <table> so that <tr> elements are properly parsed.
 func extractTableData(html string) ([][]string, error) {
 	var data [][]string
 
-	// Create a goquery document from the HTML string.
+	// Wrap the HTML fragment.
 	wrappedHTML := "<table>" + html + "</table>"
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(wrappedHTML))
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(html)
-	// Find all rows in the table.
+	// Find all rows.
 	rows := doc.Find("tr")
 	if rows.Length() == 0 {
 		return nil, fmt.Errorf("no <tr> elements found in the table HTML")
 	}
 
-	// Iterate over rows, skipping the header row (assumed to be the first row).
+	// Iterate over rows, skipping the header row.
 	rows.Each(func(i int, s *goquery.Selection) {
 		if i == 0 {
-			// Skip header row.
-			return
+			return // Skip header.
 		}
 		var rowData []string
-		// Extract text from each <td> cell.
 		s.Find("td").Each(func(j int, cell *goquery.Selection) {
 			text := strings.TrimSpace(cell.Text())
 			rowData = append(rowData, text)
 		})
-		// Only add non-empty rows.
 		if len(rowData) > 0 {
 			// Skip rows whose first cell (Date) ends with "W53"
 			if strings.HasSuffix(rowData[0], "W53") {
@@ -153,7 +162,7 @@ func extractTableData(html string) ([][]string, error) {
 	return data, nil
 }
 
-// saveToCSV writes a header and data rows into a CSV file.
+// saveToCSV writes the CSV file with a fixed header.
 func saveToCSV(data [][]string, filePath string) {
 	file, err := os.Create(filePath)
 	if err != nil {
@@ -164,26 +173,14 @@ func saveToCSV(data [][]string, filePath string) {
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	// Write header row matching the Python output.
 	header := []string{
-		"Date",
-		"Price",
-		"Change",
-		"% Change",
-		"EPS",
-		"PER",
-		"8X",
-		"9.8X",
-		"11.6X",
-		"13.4X",
-		"15.2X",
-		"17X",
+		"Date", "Price", "Change", "% Change", "EPS", "PER",
+		"8X", "9.8X", "11.6X", "13.4X", "15.2X", "17X",
 	}
 	if err := writer.Write(header); err != nil {
 		log.Fatalf("[ERROR] Failed to write header: %v", err)
 	}
 
-	// Write each data row.
 	for _, row := range data {
 		if len(row) > 0 {
 			if err := writer.Write(row); err != nil {
@@ -193,24 +190,26 @@ func saveToCSV(data [][]string, filePath string) {
 	}
 }
 
-// downloadStockDataConcurrently runs the stock downloads concurrently.
+// downloadStockDataConcurrently processes stocks concurrently, skipping stocks whose data is up to date.
 func downloadStockDataConcurrently(stockNumbers []string) {
 	var wg sync.WaitGroup
 
-	// Start Playwright once for all workers.
+	// Start Playwright once.
 	pw, err := playwright.Run()
 	if err != nil {
 		log.Fatalf("[ERROR] Failed to start Playwright: %v", err)
 	}
 	defer pw.Stop()
 
-	// Create a worker pool.
 	semaphore := make(chan struct{}, maxWorkers)
-
 	for _, stockNumber := range stockNumbers {
-		wg.Add(1)
-		semaphore <- struct{}{} // Block if maxWorkers is reached.
+		if isStockDataUpToDate(stockNumber) {
+			log.Printf("[INFO] Stock %s is up-to-date; skipping download.", stockNumber)
+			continue
+		}
 
+		wg.Add(1)
+		semaphore <- struct{}{}
 		go func(stock string) {
 			defer func() { <-semaphore }()
 			downloadStockData(stock, pw, &wg)
@@ -225,12 +224,16 @@ func main() {
 	log.Println("[INFO] Script execution started.")
 
 	// Read stock numbers from file.
-	stockNumbers, err := readStockNumbersFromFile("one_stock.txt")
+	stockNumbers, err := readStockNumbersFromFile("all_stocks_number.txt")
 	if err != nil {
 		log.Fatalf("[ERROR] Failed to read stock numbers: %v", err)
 	}
 
-	// Run concurrent stock downloads.
+	// Ensure output directory exists.
+	if err := os.MkdirAll(downloadDir, 0755); err != nil {
+		log.Fatalf("[ERROR] Failed to create download directory: %v", err)
+	}
+
 	downloadStockDataConcurrently(stockNumbers)
 
 	log.Println("[INFO] Script execution finished.")
