@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/playwright-community/playwright-go"
 )
 
@@ -28,13 +29,15 @@ func readStockNumbersFromFile(filePath string) ([]string, error) {
 	defer file.Close()
 
 	var stockNumbers []string
-	scanner := csv.NewReader(file)
+	reader := csv.NewReader(file)
 	for {
-		record, err := scanner.Read()
+		record, err := reader.Read()
 		if err != nil {
 			break
 		}
-		stockNumbers = append(stockNumbers, strings.TrimSpace(record[0]))
+		if len(record) > 0 {
+			stockNumbers = append(stockNumbers, strings.TrimSpace(record[0]))
+		}
 	}
 	return stockNumbers, nil
 }
@@ -43,7 +46,7 @@ func readStockNumbersFromFile(filePath string) ([]string, error) {
 func downloadStockData(stockNumber string, pw *playwright.Playwright, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	// Launch a browser (headless)
+	// Launch a headless browser
 	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
 		Headless: playwright.Bool(true),
 		Args:     []string{"--no-sandbox", "--disable-setuid-sandbox"},
@@ -77,57 +80,80 @@ func downloadStockData(stockNumber string, pw *playwright.Playwright, wg *sync.W
 		return
 	}
 
-	// Wait for the table to load
+	// Wait for the table container to load.
 	tableLocator := page.Locator("#tblDetail")
 	err = tableLocator.WaitFor()
 	if err != nil {
 		log.Printf("[ERROR] Table not found for stock %s", stockNumber)
-		return
+		// Even if the locator isn't found, we try to continue.
 	}
 
-	// Extract table HTML
+	// Extract the inner HTML of the table container.
 	tableHTML, err := tableLocator.InnerHTML()
 	if err != nil {
-		log.Printf("[ERROR] Failed to extract table for stock %s", stockNumber)
+		log.Printf("[ERROR] Failed to extract table for stock %s: %v", stockNumber, err)
 		return
 	}
 
-	// Parse table data
-	data := extractTableData(tableHTML)
+	// Parse table data from the HTML.
+	data, err := extractTableData(tableHTML)
+	if err != nil {
+		log.Printf("[ERROR] Failed to extract table data for stock %s: %v", stockNumber, err)
+		return
+	}
 
-	// Save to CSV
+	// Save to CSV with header.
 	outputFilePath := filepath.Join(downloadDir, stockNumber+".csv")
 	saveToCSV(data, outputFilePath)
 
 	log.Printf("[SUCCESS] Stock %s data saved.", stockNumber)
 }
 
-// Extract table data from HTML
-func extractTableData(html string) [][]string {
-	rows := strings.Split(html, "<tr>")
+// extractTableData parses the provided HTML (assumed to be a table) and returns a 2D slice.
+// It skips the first (header) row and any row with a Date (first cell) ending with "W53".
+func extractTableData(html string) ([][]string, error) {
 	var data [][]string
 
-	for _, row := range rows {
-		if strings.Contains(row, "<td>") {
-			cells := strings.Split(row, "<td>")
-			var rowData []string
-			for _, cell := range cells {
-				text := strings.TrimSpace(stripHTMLTags(cell))
-				rowData = append(rowData, text)
+	// Create a goquery document from the HTML string.
+	wrappedHTML := "<table>" + html + "</table>"
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(wrappedHTML))
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(html)
+	// Find all rows in the table.
+	rows := doc.Find("tr")
+	if rows.Length() == 0 {
+		return nil, fmt.Errorf("no <tr> elements found in the table HTML")
+	}
+
+	// Iterate over rows, skipping the header row (assumed to be the first row).
+	rows.Each(func(i int, s *goquery.Selection) {
+		if i == 0 {
+			// Skip header row.
+			return
+		}
+		var rowData []string
+		// Extract text from each <td> cell.
+		s.Find("td").Each(func(j int, cell *goquery.Selection) {
+			text := strings.TrimSpace(cell.Text())
+			rowData = append(rowData, text)
+		})
+		// Only add non-empty rows.
+		if len(rowData) > 0 {
+			// Skip rows whose first cell (Date) ends with "W53"
+			if strings.HasSuffix(rowData[0], "W53") {
+				return
 			}
 			data = append(data, rowData)
 		}
-	}
+	})
 
-	return data
+	return data, nil
 }
 
-// Remove HTML tags from a string
-func stripHTMLTags(input string) string {
-	return strings.NewReplacer("<td>", "", "</td>", "", "<tr>", "", "</tr>", "").Replace(input)
-}
-
-// Save data to CSV
+// saveToCSV writes a header and data rows into a CSV file.
 func saveToCSV(data [][]string, filePath string) {
 	file, err := os.Create(filePath)
 	if err != nil {
@@ -138,34 +164,55 @@ func saveToCSV(data [][]string, filePath string) {
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
+	// Write header row matching the Python output.
+	header := []string{
+		"Date",
+		"Price",
+		"Change",
+		"% Change",
+		"EPS",
+		"PER",
+		"8X",
+		"9.8X",
+		"11.6X",
+		"13.4X",
+		"15.2X",
+		"17X",
+	}
+	if err := writer.Write(header); err != nil {
+		log.Fatalf("[ERROR] Failed to write header: %v", err)
+	}
+
+	// Write each data row.
 	for _, row := range data {
 		if len(row) > 0 {
-			_ = writer.Write(row)
+			if err := writer.Write(row); err != nil {
+				log.Printf("[ERROR] Failed to write row: %v", err)
+			}
 		}
 	}
 }
 
-// Worker pool to download stocks concurrently
+// downloadStockDataConcurrently runs the stock downloads concurrently.
 func downloadStockDataConcurrently(stockNumbers []string) {
 	var wg sync.WaitGroup
 
-	// Start Playwright once for all workers
+	// Start Playwright once for all workers.
 	pw, err := playwright.Run()
 	if err != nil {
 		log.Fatalf("[ERROR] Failed to start Playwright: %v", err)
 	}
 	defer pw.Stop()
 
-	// Create worker pool
+	// Create a worker pool.
 	semaphore := make(chan struct{}, maxWorkers)
 
-	// Start downloading stocks concurrently
 	for _, stockNumber := range stockNumbers {
 		wg.Add(1)
-		semaphore <- struct{}{} // Block if maxWorkers is reached
+		semaphore <- struct{}{} // Block if maxWorkers is reached.
 
 		go func(stock string) {
-			defer func() { <-semaphore }() // Release worker slot
+			defer func() { <-semaphore }()
 			downloadStockData(stock, pw, &wg)
 		}(stockNumber)
 	}
@@ -177,13 +224,13 @@ func downloadStockDataConcurrently(stockNumbers []string) {
 func main() {
 	log.Println("[INFO] Script execution started.")
 
-	// Read stock numbers from file
-	stockNumbers, err := readStockNumbersFromFile("all_stocks_number.txt")
+	// Read stock numbers from file.
+	stockNumbers, err := readStockNumbersFromFile("one_stock.txt")
 	if err != nil {
 		log.Fatalf("[ERROR] Failed to read stock numbers: %v", err)
 	}
 
-	// Run concurrent stock downloads
+	// Run concurrent stock downloads.
 	downloadStockDataConcurrently(stockNumbers)
 
 	log.Println("[INFO] Script execution finished.")
