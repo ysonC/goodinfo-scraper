@@ -16,6 +16,7 @@ import (
 
 const (
 	downloadDir = "output_stock"
+	inputDir    = "input_stock"
 	inputFile   = "input_stock/stock_numbers.txt"
 	maxWorkers  = 10 // Controls concurrency level
 )
@@ -39,6 +40,43 @@ func readStockNumbersFromFile(filePath string) ([]string, error) {
 			stockNumbers = append(stockNumbers, strings.TrimSpace(record[0]))
 		}
 	}
+	return stockNumbers, nil
+}
+
+// readStockNumbersFromFolder reads stock numbers from every CSV file in the specified folder.
+func readStockNumbersFromFolder(folderPath string) ([]string, error) {
+	entries, err := os.ReadDir(folderPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read directory %s: %v", folderPath, err)
+	}
+
+	var stockNumbers []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			// Skip subdirectories.
+			continue
+		}
+		filePath := filepath.Join(folderPath, entry.Name())
+		file, err := os.Open(filePath)
+		if err != nil {
+			// Log error and continue with the next file.
+			fmt.Printf("Error opening file %s: %v\n", filePath, err)
+			continue
+		}
+
+		reader := csv.NewReader(file)
+		for {
+			record, err := reader.Read()
+			if err != nil {
+				break // EOF or error; proceed to next file.
+			}
+			if len(record) > 0 {
+				stockNumbers = append(stockNumbers, strings.TrimSpace(record[0]))
+			}
+		}
+		file.Close()
+	}
+
 	return stockNumbers, nil
 }
 
@@ -224,7 +262,7 @@ func main() {
 	log.Println("[INFO] Script execution started.")
 
 	// Read stock numbers from file.
-	stockNumbers, err := readStockNumbersFromFile("all_stocks_number.txt")
+	stockNumbers, err := readStockNumbersFromFolder(inputDir)
 	if err != nil {
 		log.Fatalf("[ERROR] Failed to read stock numbers: %v", err)
 	}
