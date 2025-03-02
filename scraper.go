@@ -21,29 +21,7 @@ const (
 	maxWorkers  = 10 // Controls concurrency level
 )
 
-// readStockNumbersFromFile reads stock numbers from a file.
-func readStockNumbersFromFile(filePath string) ([]string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var stockNumbers []string
-	reader := csv.NewReader(file)
-	for {
-		record, err := reader.Read()
-		if err != nil {
-			break
-		}
-		if len(record) > 0 {
-			stockNumbers = append(stockNumbers, strings.TrimSpace(record[0]))
-		}
-	}
-	return stockNumbers, nil
-}
-
-// readStockNumbersFromFolder reads stock numbers from every CSV file in the specified folder.
+// Reads stock numbers from every CSV file in the specified folder.
 func readStockNumbersFromFolder(folderPath string) ([]string, error) {
 	entries, err := os.ReadDir(folderPath)
 	if err != nil {
