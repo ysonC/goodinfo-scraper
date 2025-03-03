@@ -1,43 +1,45 @@
-# ---- Stage 1: Build the binary ----
-FROM golang:1.24.0 AS builder
+################################################
+# 1) Build the Go scraper
+################################################
+FROM golang:1.24 AS builder
 WORKDIR /app
 
-# Copy go.mod and go.sum, then download dependencies
+# Copy mod files and download dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the full source code into the container
+# Copy the rest of the source code
 COPY . .
 
-# Build the binary. We disable CGO for a static binary.
-RUN CGO_ENABLED=0 GOOS=linux go build -o scraper .
+# Build a static Go binary named "scraper"
+RUN CGO_ENABLED=0 GOOS=linux go build -o /scraper .
 
-# ---- Final Stage: Runtime image ----
-FROM node:20-bookworm
-ENV DEBIAN_FRONTEND=noninteractive
+################################################
+# 2) Install the Playwright-Go driver
+################################################
+FROM golang:1.24 AS driver-installer
+# playwright-go provides a helper CLI under "cmd/playwright"
+RUN go install github.com/playwright-community/playwright-go/cmd/playwright@latest
 
-# Install dependencies required by Chromium/Playwright
-RUN apt-get update && apt-get install -y \
-    curl \
-    wget \
-    ca-certificates \
- && rm -rf /var/lib/apt/lists/*
+# Pre-install the matching version of the driver
+# (Installs it in /root/.cache/ms-playwright-go by default)
+RUN /go/bin/playwright install --with-deps
 
+################################################
+# 3) Final image: Use official MS Playwright runtime
+################################################
+FROM mcr.microsoft.com/playwright:v1.50.1-jammy
 WORKDIR /app
-RUN mkdir -p input_stock output_stock
 
-# Copy the built binary from the builder stage
-COPY --from=builder /app/scraper .
+# Copy the Go binary from the builder stage
+COPY --from=builder /scraper /app/scraper
 
-# Set the browser installation path so the driver is installed in a known location
-ENV PLAYWRIGHT_BROWSERS_PATH=/app/.playwright-browsers
+# Copy the "playwright" driver CLI
+COPY --from=driver-installer /go/bin/playwright /usr/local/bin/playwright
 
-# Install Playwright along with its browser binaries/driver
-RUN npx -y playwright@1.50.1 install --with-deps
+# Also copy the driver caches that were installed
+COPY --from=driver-installer /root/.cache/ms-playwright-go /root/.cache/ms-playwright-go
 
-# (Optional) Add the directory to PATH if your app expects to find the executable there
-ENV PATH=/app/.playwright-browsers:$PATH
-
-# Set the entrypoint to run your scraper
-ENTRYPOINT ["./scraper"]
+# Default entrypoint: run the Go scraper
+ENTRYPOINT ["/app/scraper"]
 

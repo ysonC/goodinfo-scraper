@@ -21,58 +21,50 @@ This repository provides a Go-based scraper to gather weekly stock price and val
 ```
 .
 ├── .gitignore
+├── Dockerfile
 ├── go.mod
 ├── go.sum
 ├── input_stock/
 │   └── all_stocks_number.txt
-├── one_stock.txt
 ├── output_stock/
-└── scraper.go
+├── scraper.go
+└── ...
 ```
 
-- **`input_stock/`**: Contains one or more files with stock numbers. Each line in a represents a single stock number.
+- **`input_stock/`**: Contains one or more files with stock numbers. Each line in a file represents a single stock number.
 - **`output_stock/`**: Populated with CSV files for each stock that is successfully scraped.
 - **`go.mod` / `go.sum`**: Go modules and dependency tracking.
 - **`scraper.go`**: Main Go application that reads stock numbers, fetches data from the target site, and writes results.
 
 > **Note**: By default, the scraper reads every CSV file in `input_stock`. An example file is `all_stocks_number.txt`, which lists a large set of stock numbers, one per line.
 
-## Prerequisites
+## Prerequisites (Local Development)
 
 1. **Go 1.24 or later**  
    Make sure you have [Go](https://go.dev/) installed and properly set up (`GOPATH`, etc.).
-   
+
 2. **Playwright dependencies**  
    The scraper uses Playwright for Go. On most systems, you need to install the necessary browser dependencies.  
-   - You can see the list of dependencies in [Playwright’s official docs](https://playwright.dev/), but typically it includes `chromium` dependencies and OS libraries for Chrome/Chromium.
-   - Installing [Node.js](https://nodejs.org/) (≥ v14) can help if you need to use the `npx playwright install` command manually. However, the code can handle browser installation if run in an environment that allows Playwright to download the drivers.
+   - Check [Playwright’s official docs](https://playwright.dev/) for the list of OS packages needed for Chromium/Firefox/WebKit.
+   - Installing [Node.js](https://nodejs.org/) can help if you need the `npx playwright install` command.
 
-## Installation
+## Installation (Local)
 
-1. **Clone the repository** (or download it):
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/your-username/stock-scraper.git
    cd stock-scraper
    ```
-   
 2. **Download Go modules**:
    ```bash
    go mod download
    ```
-   This will fetch all required dependencies as specified in `go.mod` / `go.sum`.
+   This fetches all required dependencies as specified in `go.mod` / `go.sum`.
 
-## Usage
+## Usage (Local)
 
 1. **Prepare your stock numbers**  
-   - Place CSV files in the `input_stock` folder.  
-   - Each file can contain one stock number per line, e.g.:
-     ```
-     2330
-     2317
-     3008
-     ```
-   - The script will scan all CSV files in `input_stock` and gather all listed stock numbers.
-
+   - Place CSV files in the `input_stock` folder (one stock number per line).
 2. **Run the scraper**  
    ```bash
    go run scraper.go
@@ -82,33 +74,57 @@ This repository provides a Go-based scraper to gather weekly stock price and val
    go build -o scraper .
    ./scraper
    ```
-   As it runs, you will see logs indicating which stock numbers are being processed or skipped (if up-to-date).
+   The scraper will prompt you to select a date range (e.g., nearest 5 years or a custom range).
 
 3. **Check the output**  
-   - CSV files for each processed stock will appear in the `output_stock` folder.
+   - CSV files appear in the `output_stock` folder.
    - Filenames match the stock number (`<stock>.csv`).  
-   - Each output CSV includes a header row and subsequent weekly data rows.
+   - Each CSV includes a header row and subsequent data rows.
+
+## Running via Docker
+
+If you prefer not to install Go or browser dependencies locally, you can build and run the scraper in a Docker container that includes all necessary dependencies and Playwright binaries.
+
+1. **Build the Docker image**:
+   ```bash
+   docker build -t my-scraper .
+   ```
+   This uses the `Dockerfile` in the repository (a multi-stage build) to:
+   - Compile the Go code.
+   - Install the Playwright-Go driver.
+   - Copy everything into a Playwright-enabled base image.
+
+2. **Run the Docker container** (interactive mode is required for date-range input):
+   ```bash
+   docker run -it --rm \
+     -v $(pwd)/output_stock:/app/output_stock \
+     -v $(pwd)/input_stock:/app/input_stock \
+     my-scraper
+   ```
+   - Run in interactive mode with mounted volume to access CSV files on your host.
+   - When prompted, select `1` for “Nearest 5 years” or `2` for “Custom range,” and then provide any required dates.
+
 
 ## Customizing the Concurrency
 
-- In `scraper.go`, find `const maxWorkers = 10`.
-- Modify the value (e.g., `maxWorkers = 5`) to adjust how many stocks are scraped concurrently.
+In `scraper.go`, find:
+
+```go
+const maxWorkers = 10
+```
+
+Change `10` to whatever concurrency you prefer.
 
 ## Troubleshooting
 
 1. **Playwright Browser Issues**  
-   - Ensure you have the required OS libraries to run headless Chromium.
-   - Check that your environment allows Playwright to download and install browser drivers.
+   - If running locally, ensure you have the OS libraries to run headless Chromium.  
+   - In Docker, the provided Dockerfile includes these dependencies.
 
-2. **File Not Found or Permission Errors**  
-   - Make sure `input_stock` and `output_stock` exist (the code will create `output_stock` if it doesn’t).
-   - Verify you have read/write permissions for these folders.
+2. **File Permission Errors**  
+   - Ensure `input_stock` and `output_stock` exist and are writable. If mounting volumes in Docker, check your host’s directory permissions.
 
 3. **Data Missing or Incorrect**  
-   - Verify the target site (`goodinfo.tw`) is accessible.
-   - Check that your stock numbers are valid and properly formatted (no extra spaces, etc.).
-
-## License
-
-This project is distributed under the MIT License—see the [LICENSE](LICENSE) file for more details (if included in the repository).
+   - Verify `goodinfo.tw` is accessible (sometimes it blocks requests or changes the layout).
+   - Check that your stock numbers are valid and properly formatted.
 
