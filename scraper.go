@@ -73,10 +73,14 @@ func isStockDataUpToDate(stockNumber string) bool {
 }
 
 // downloadStockData downloads and saves data for one stock.
-func downloadStockData(stockNumber string, pw *playwright.Playwright, wg *sync.WaitGroup) {
+func downloadStockData(
+	stockNumber string,
+	start_date string,
+	end_date string,
+	pw *playwright.Playwright,
+	wg *sync.WaitGroup,
+) {
 	defer wg.Done()
-	start_date := "2025-02-28"
-	end_date := time.Now().Format("2006-01-02")
 
 	// Launch a headless browser.
 	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
@@ -210,7 +214,7 @@ func saveToCSV(data [][]string, filePath string) {
 }
 
 // downloadStockDataConcurrently processes stocks concurrently, skipping stocks whose data is up to date.
-func downloadStockDataConcurrently(stockNumbers []string) {
+func downloadStockDataConcurrently(stockNumbers []string, start_date string, end_date string) {
 	var wg sync.WaitGroup
 
 	// Start Playwright once.
@@ -231,12 +235,50 @@ func downloadStockDataConcurrently(stockNumbers []string) {
 		semaphore <- struct{}{}
 		go func(stock string) {
 			defer func() { <-semaphore }()
-			downloadStockData(stock, pw, &wg)
+			downloadStockData(stock, start_date, end_date, pw, &wg)
 		}(stockNumber)
 	}
 
 	wg.Wait()
 	log.Println("[INFO] All stock downloads completed.")
+}
+
+func selectDate() (startDate, endDate string, err error) {
+	fmt.Println("Please select the date range:")
+	fmt.Println("1. Nearest 5 years")
+	fmt.Println("2. Custom range")
+
+	var input string
+	if _, err = fmt.Scanln(&input); err != nil {
+		return "", "", fmt.Errorf("failed to read input: %w", err)
+	}
+
+	switch input {
+	case "1":
+		startDate = "2001-03-28"
+		endDate = time.Now().Format("2006-01-02")
+	case "2":
+		fmt.Println("Please enter the start date (YYYY-MM-DD):")
+		if _, err = fmt.Scanln(&startDate); err != nil {
+			return "", "", fmt.Errorf("failed to read start date: %w", err)
+		}
+		fmt.Println("Please enter the end date (YYYY-MM-DD):")
+		if _, err = fmt.Scanln(&endDate); err != nil {
+			return "", "", fmt.Errorf("failed to read end date: %w", err)
+		}
+
+		// Validate date formats using time.Parse
+		const layout = "2006-01-02"
+		if _, err = time.Parse(layout, startDate); err != nil {
+			return "", "", fmt.Errorf("invalid start date format: %w", err)
+		}
+		if _, err = time.Parse(layout, endDate); err != nil {
+			return "", "", fmt.Errorf("invalid end date format: %w", err)
+		}
+	default:
+		return "", "", fmt.Errorf("invalid input: %s", input)
+	}
+	return startDate, endDate, nil
 }
 
 func main() {
@@ -254,7 +296,14 @@ func main() {
 		log.Fatalf("[ERROR] Failed to create download directory: %v", err)
 	}
 
-	downloadStockDataConcurrently(stockNumbers)
+	// Select date range
+	start_date, end_date, err := selectDate()
+	if err != nil {
+		log.Fatalf("[ERROR] Failed to select date range: %v", err)
+	}
+
+	// Download stock data concurrently.
+	downloadStockDataConcurrently(stockNumbers, start_date, end_date)
 
 	log.Println("[INFO] Script execution finished.")
 }
