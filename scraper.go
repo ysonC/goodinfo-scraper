@@ -75,6 +75,8 @@ func isStockDataUpToDate(stockNumber string) bool {
 // downloadStockData downloads and saves data for one stock.
 func downloadStockData(stockNumber string, pw *playwright.Playwright, wg *sync.WaitGroup) {
 	defer wg.Done()
+	start_date := "2025-02-28"
+	end_date := time.Now().Format("2006-01-02")
 
 	// Launch a headless browser.
 	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
@@ -96,9 +98,10 @@ func downloadStockData(stockNumber string, pw *playwright.Playwright, wg *sync.W
 
 	// Construct stock URL.
 	url := fmt.Sprintf(
-		"https://goodinfo.tw/tw/ShowK_ChartFlow.asp?RPT_CAT=PER&STEP=DATA&STOCK_ID=%s&CHT_CAT=WEEK&PRICE_ADJ=F&START_DT=2001-03-28&END_DT=%s",
+		"https://goodinfo.tw/tw/ShowK_ChartFlow.asp?RPT_CAT=PER&STEP=DATA&STOCK_ID=%s&CHT_CAT=WEEK&PRICE_ADJ=F&START_DT=%s&END_DT=%s",
 		stockNumber,
-		time.Now().Format("2006-01-02"),
+		start_date,
+		end_date,
 	)
 
 	// Visit the URL.
@@ -241,6 +244,7 @@ func main() {
 
 	// Read stock numbers from file.
 	stockNumbers, err := readStockNumbersFromFolder(inputDir)
+	// stockNumbers = []string{"2330"}
 	if err != nil {
 		log.Fatalf("[ERROR] Failed to read stock numbers: %v", err)
 	}
