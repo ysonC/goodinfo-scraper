@@ -12,7 +12,8 @@ import (
 
 	"github.com/playwright-community/playwright-go"
 
-	"github.com/ysonC/multi-stocks-download/scraper/per"
+	"github.com/ysonC/multi-stocks-download/scraper"
+	"github.com/ysonC/multi-stocks-download/storage"
 )
 
 const (
@@ -142,11 +143,7 @@ func main() {
 	}
 	switch scraperType {
 	case "per":
-		scraperInstance = per.NewPERScraper(pw)
-	case "cashflow":
-		scraperInstance = cashflow.NewCashFlowScraper(pw)
-	case "revenue":
-		scraperInstance = revenue.NewRevenueScraper(pw)
+		scraperInstance = scraper.NewPERScraper(pw)
 	default:
 		log.Fatalf("Unknown scraper type: %s", scraperType)
 	}

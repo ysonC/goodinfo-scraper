@@ -1,4 +1,4 @@
-package per
+package scraper
 
 import (
 	"fmt"
