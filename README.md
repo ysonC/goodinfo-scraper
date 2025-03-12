@@ -47,7 +47,10 @@ This repository provides a Go-based scraper to gather weekly stock price and val
    The scraper uses Playwright for Go. On most systems, you need to install the necessary browser dependencies.  
    - Check [Playwright’s official docs](https://playwright.dev/) for the list of OS packages needed for Chromium/Firefox/WebKit.
    - Installing [Node.js](https://nodejs.org/) can help if you need the `npx playwright install` command.
-
+   - Install the Playwright driver for go with the command below.
+```
+go run github.com/playwright-community/playwright-go/cmd/playwright install
+```
 ## Installation (Local)
 
 1. **Clone the repository**:
