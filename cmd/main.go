@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"multi-stocks-download/scraper/per"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +11,8 @@ import (
 	"time"
 
 	"github.com/playwright-community/playwright-go"
+
+	"github.com/ysonC/multi-stocks-download/scraper/per"
 )
 
 const (

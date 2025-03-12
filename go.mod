@@ -1,4 +1,4 @@
-module multi-stocks-download
+module github.com/ysonC/multi-stocks-download
 
 go 1.23
 
