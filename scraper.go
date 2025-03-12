@@ -170,8 +170,9 @@ func extractTableData(html string) ([][]string, error) {
 		}
 		var rowData []string
 		s.Find("td").Each(func(j int, cell *goquery.Selection) {
-			text := strings.TrimSpace(cell.Text())
-			rowData = append(rowData, text)
+			if j < 6 { // Keep only Date, Price, Change, % Change, EPS, PER
+				rowData = append(rowData, strings.TrimSpace(cell.Text()))
+			}
 		})
 		if len(rowData) > 0 {
 			// Skip rows whose first cell (Date) ends with "W53"
@@ -198,7 +199,6 @@ func saveToCSV(data [][]string, filePath string) {
 
 	header := []string{
 		"Date", "Price", "Change", "% Change", "EPS", "PER",
-		"8X", "9.8X", "11.6X", "13.4X", "15.2X", "17X",
 	}
 	if err := writer.Write(header); err != nil {
 		log.Fatalf("[ERROR] Failed to write header: %v", err)

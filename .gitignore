@@ -1,3 +1,7 @@
 output_stock
 scraper
 test-results
+.DS_Store
+all_stocks_number.txt
+input_stock/one_stock.txt
+input_stock/all_stocks_number.txt
