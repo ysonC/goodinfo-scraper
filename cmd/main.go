@@ -17,9 +17,8 @@ import (
 )
 
 const (
-	inputDir   = "input_stock"
-	outputDir  = "output_stock"
-	maxWorkers = 10
+	inputDir  = "input_stock"
+	outputDir = "output_stock"
 )
 
 func selectMaxWorkers() (int, error) {
