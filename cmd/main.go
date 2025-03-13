@@ -34,7 +34,7 @@ func selectDateRange() (string, string, error) {
 	fmt.Scanln(&input)
 	switch input {
 	case "1":
-		start := "2001-03-28"
+		start := "2020-03-14"
 		end := time.Now().Format("2006-01-02")
 		return start, end, nil
 	case "2":
@@ -144,6 +144,8 @@ func main() {
 	switch scraperType {
 	case "per":
 		scraperInstance = scraper.NewPERScraper(pw)
+	case "cashflow":
+		scraperInstance = scraper.NewCashFlowScraper(pw)
 	default:
 		log.Fatalf("Unknown scraper type: %s", scraperType)
 	}

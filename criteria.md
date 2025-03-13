@@ -1,3 +1,8 @@
+---
+tags: []
+creation_date: "2025-03-13"
+---
+
 ## Sheet 1 Update
 - Remove Columns G ~ L (Different PER Price)
 - Add Index data to the same sheet. (Do it for each stock) (The dates should align with each other) (Leave one column in the middle blank)
@@ -10,3 +15,14 @@
 - TSMC Example Link: https://goodinfo.tw/tw/ShowSaleMonChart.asp?STOCK_ID=2330
 - Cash Flow Statement
 - TSMC Example Link: https://goodinfo.tw/tw/StockCashFlow.asp?STOCK_ID=2330&PRICE_ADJ=F&SCROLL2Y=215&RPT_CAT=M_QUAR
+
+
+## First Sheet
+- PER on the left
+    https://goodinfo.tw/tw/ShowK_ChartFlow.asp?RPT_CAT=PER&STOCK_ID=2330
+- Stock Price on the right
+    https://goodinfo.tw/tw/ShowK_Chart.asp?STOCK_ID=2330&CHT_CAT=WEEK&PRICE_ADJ=T&SCROLL2Y=389
+
+## Second Sheet
+- Monthly Revenue on the left
+- Cash Flow Statement on the right
