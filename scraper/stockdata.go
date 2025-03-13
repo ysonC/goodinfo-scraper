@@ -10,17 +10,17 @@ import (
 )
 
 // PERScraper implements the scraper for PER data.
-type CashFlowScraper struct {
+type StockDataScraper struct {
 	pw *playwright.Playwright
 }
 
 // NewPERScraper returns a new PERScraper.
-func NewCashFlowScraper(pw *playwright.Playwright) *CashFlowScraper {
-	return &CashFlowScraper{pw: pw}
+func NewStockDataScraper(pw *playwright.Playwright) *StockDataScraper {
+	return &StockDataScraper{pw: pw}
 }
 
 // Scrape navigates to the PER URL, extracts the table HTML, and parses it.
-func (p *CashFlowScraper) Scrape(stockNumber, startDate, endDate string) ([][]string, error) {
+func (p *StockDataScraper) Scrape(stockNumber, startDate, endDate string) ([][]string, error) {
 	browser, err := p.pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
 		Headless: playwright.Bool(true),
 		Args:     []string{"--no-sandbox", "--disable-setuid-sandbox"},
@@ -54,6 +54,13 @@ func (p *CashFlowScraper) Scrape(stockNumber, startDate, endDate string) ([][]st
 		log.Printf("Warning: table not found for stock %s", stockNumber)
 	}
 
+	// Wait for the table's inner text to be non-empty.
+	if _, err := page.WaitForFunction(`() => {
+    return document.querySelector("#tblDetail").querySelectorAll("tr").length >= 200;
+}`, nil); err != nil {
+		return nil, fmt.Errorf("timeout waiting for table data: %w", err)
+	}
+
 	tableHTML, err := tableLocator.InnerHTML()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get table HTML: %w", err)
@@ -66,7 +73,8 @@ func (p *CashFlowScraper) Scrape(stockNumber, startDate, endDate string) ([][]st
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Document: %v", doc.Text())
+
+	// Extract the table data.
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
 		var row []string
 		s.Find("td").Each(func(j int, cell *goquery.Selection) {

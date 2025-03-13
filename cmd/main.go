@@ -55,7 +55,7 @@ func selectDateRange() (string, string, error) {
 func selectScraperType() (string, error) {
 	fmt.Println("Select scraper type:")
 	fmt.Println("1. PER")
-	fmt.Println("2. Cash Flow")
+	fmt.Println("2. Stock Data")
 	fmt.Println("3. Monthly Revenue")
 	fmt.Print("Enter option: ")
 
@@ -65,7 +65,7 @@ func selectScraperType() (string, error) {
 	case "1":
 		return "per", nil
 	case "2":
-		return "cashflow", nil
+		return "stockdata", nil
 	case "3":
 		return "revenue", nil
 	default:
@@ -144,8 +144,8 @@ func main() {
 	switch scraperType {
 	case "per":
 		scraperInstance = scraper.NewPERScraper(pw)
-	case "cashflow":
-		scraperInstance = scraper.NewCashFlowScraper(pw)
+	case "stockdata":
+		scraperInstance = scraper.NewStockDataScraper(pw)
 	default:
 		log.Fatalf("Unknown scraper type: %s", scraperType)
 	}
