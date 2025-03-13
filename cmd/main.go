@@ -25,16 +25,15 @@ const (
 // selectDateRange lets the user choose a date range if needed.
 func selectDateRange() (string, string, error) {
 	fmt.Println("Select date range:")
-	fmt.Println("1. Nearest 5 years (for PER scraping)")
+	fmt.Println("1. Max  years")
 	fmt.Println("2. Custom range (enter start and end dates, format YYYY-MM-DD)")
-	fmt.Println("3. No date range (for scrapers that don’t require dates)")
 	fmt.Print("Enter option: ")
 
 	var input string
 	fmt.Scanln(&input)
 	switch input {
 	case "1":
-		start := "2020-03-14"
+		start := "2005-03-01"
 		end := time.Now().Format("2006-01-02")
 		return start, end, nil
 	case "2":
@@ -44,8 +43,6 @@ func selectDateRange() (string, string, error) {
 		fmt.Print("Enter end date (YYYY-MM-DD): ")
 		fmt.Scanln(&end)
 		return start, end, nil
-	case "3":
-		return "", "", nil
 	default:
 		return "", "", fmt.Errorf("invalid option")
 	}
@@ -67,7 +64,7 @@ func selectScraperType() (string, error) {
 	case "2":
 		return "stockdata", nil
 	case "3":
-		return "revenue", nil
+		return "monthlyrevenue", nil
 	default:
 		return "", fmt.Errorf("invalid option")
 	}
