@@ -137,17 +137,9 @@ func main() {
 	}
 	defer pw.Stop()
 
-	// Create scraper instance based on the chosen type.
-	var scraperInstance interface {
-		Scrape(stockNumber, startDate, endDate string) ([][]string, error)
-	}
-	switch scraperType {
-	case "per":
-		scraperInstance = scraper.NewPERScraper(pw)
-	case "stockdata":
-		scraperInstance = scraper.NewStockDataScraper(pw)
-	default:
-		log.Fatalf("Unknown scraper type: %s", scraperType)
+	scraperInstance, err := scraper.NewScraper(scraperType, pw)
+	if err != nil {
+		log.Fatalf("Failed to create scraper: %v", err)
 	}
 
 	// Use a semaphore to limit concurrency.
