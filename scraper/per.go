@@ -52,6 +52,13 @@ func (p *PERScraper) Scrape(stockNumber, startDate, endDate string) ([][]string,
 		log.Printf("Warning: table not found for stock %s", stockNumber)
 	}
 
+	// Wait for the table's inner text to be non-empty.
+	if _, err := page.WaitForFunction(`() => {
+    return document.querySelector("#tblDetail").querySelectorAll("tr").length >= 200;
+}`, nil); err != nil {
+		return nil, fmt.Errorf("timeout waiting for table data: %w", err)
+	}
+
 	tableHTML, err := tableLocator.InnerHTML()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get table HTML: %w", err)
