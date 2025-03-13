@@ -35,7 +35,7 @@ func (b *BaseScraper) fetchHTML(url string) (string, error) {
 	}
 
 	if _, err := page.Goto(url, playwright.PageGotoOptions{
-		WaitUntil: playwright.WaitUntilStateLoad,
+		WaitUntil: playwright.WaitUntilStateNetworkidle,
 	}); err != nil {
 		return "", fmt.Errorf("failed to goto URL: %w", err)
 	}
@@ -46,11 +46,12 @@ func (b *BaseScraper) fetchHTML(url string) (string, error) {
 	}
 
 	// Now wait until the table has at least 200 rows.
-	if _, err := page.WaitForFunction(`() => {
-    return document.querySelector("#tblDetail").querySelectorAll("tr").length >= 200;
-}`, nil); err != nil {
-		return "", fmt.Errorf("timeout waiting for table data: %w", err)
-	}
+	// 	if _, err := page.WaitForFunction(`() => {
+	//     return document.querySelector("#tblDetail").querySelectorAll("tr").length >= 200;
+	// }`, nil); err != nil {
+	// 		return "", fmt.Errorf("timeout waiting for table data: %w", err)
+	// 	}
+	//
 
 	html, err := tableLocator.InnerHTML()
 	if err != nil {

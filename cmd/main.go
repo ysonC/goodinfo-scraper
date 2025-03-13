@@ -33,7 +33,7 @@ func selectDateRange() (string, string, error) {
 	fmt.Scanln(&input)
 	switch input {
 	case "1":
-		start := "2005-03-01"
+		start := "1965-01-01"
 		end := time.Now().Format("2006-01-02")
 		return start, end, nil
 	case "2":
@@ -54,6 +54,7 @@ func selectScraperType() (string, error) {
 	fmt.Println("1. PER")
 	fmt.Println("2. Stock Data")
 	fmt.Println("3. Monthly Revenue")
+	fmt.Println("4. Cashflow")
 	fmt.Print("Enter option: ")
 
 	var input string
@@ -65,6 +66,8 @@ func selectScraperType() (string, error) {
 		return "stockdata", nil
 	case "3":
 		return "monthlyrevenue", nil
+	case "4":
+		return "cashflow", nil
 	default:
 		return "", fmt.Errorf("invalid option")
 	}
