@@ -22,6 +22,29 @@ const (
 	maxWorkers = 10
 )
 
+func selectMaxWorkers() (int, error) {
+	fmt.Println("Select max number of workers to download for you: ")
+	fmt.Println("1. 10 (recommended)")
+	fmt.Println("2. 20 (kinda recommended)")
+	fmt.Println("3. 30 (maybe not recommended)")
+	fmt.Println("4. 100(are you sure?)")
+
+	var input string
+	fmt.Scanln(&input)
+	switch input {
+	case "1":
+		return 10, nil
+	case "2":
+		return 20, nil
+	case "3":
+		return 30, nil
+	case "4":
+		return 100, nil
+	default:
+		return 0, fmt.Errorf("invalid option")
+	}
+}
+
 // selectDateRange lets the user choose a date range if needed.
 func selectDateRange() (string, string, error) {
 	fmt.Println("Select date range:")
@@ -120,6 +143,12 @@ func main() {
 		log.Fatalf("No stock numbers found in %s", inputDir)
 	}
 
+	// Select the number of workers to use.
+	maxWorkers, err := selectMaxWorkers()
+	if err != nil {
+		log.Fatalf("Error selecting number of workers: %v", err)
+	}
+
 	startDate, endDate, err := selectDateRange()
 	if err != nil {
 		log.Fatalf("Error selecting date range: %v", err)
@@ -140,7 +169,6 @@ func main() {
 
 	for _, stock := range stocks {
 		for _, sType := range scraperTypes {
-
 			wg.Add(1)
 			sem <- struct{}{}
 			go func(stockNumber, scraperType string) {
