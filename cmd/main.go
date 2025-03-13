@@ -120,15 +120,12 @@ func main() {
 		log.Fatalf("No stock numbers found in %s", inputDir)
 	}
 
-	scraperType, err := selectScraperType()
-	if err != nil {
-		log.Fatalf("Error selecting scraper type: %v", err)
-	}
-
 	startDate, endDate, err := selectDateRange()
 	if err != nil {
 		log.Fatalf("Error selecting date range: %v", err)
 	}
+
+	scraperTypes := []string{"per", "stockdata", "monthlyrevenue", "cashflow"}
 
 	// Start Playwright once.
 	pw, err := playwright.Run()
@@ -137,42 +134,61 @@ func main() {
 	}
 	defer pw.Stop()
 
-	scraperInstance, err := scraper.NewScraper(scraperType, pw)
-	if err != nil {
-		log.Fatalf("Failed to create scraper: %v", err)
-	}
-
 	// Use a semaphore to limit concurrency.
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, maxWorkers)
 
 	for _, stock := range stocks {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func(stockNumber string) {
-			defer wg.Done()
-			defer func() { <-sem }()
+		for _, sType := range scraperTypes {
 
-			// Build output filename including the scraper type.
-			outputFile := filepath.Join(outputDir, stockNumber+"_"+scraperType+".csv")
-			if storage.IsFileUpToDate(outputFile) {
-				log.Printf("Stock %s data is up-to-date. Skipping.", stockNumber)
-				return
-			}
+			wg.Add(1)
+			sem <- struct{}{}
+			go func(stockNumber, scraperType string) {
+				defer wg.Done()
+				defer func() { <-sem }()
 
-			data, err := scraperInstance.Scrape(stockNumber, startDate, endDate)
-			if err != nil {
-				log.Printf("Error scraping stock %s: %v", stockNumber, err)
-				return
-			}
+				// Create an output folder for each stock.
+				stockOutputDir := filepath.Join(outputDir, stockNumber)
+				if err := os.MkdirAll(stockOutputDir, 0755); err != nil {
+					log.Printf(
+						"Failed to create output directory for stock %s: %v",
+						stockNumber,
+						err,
+					)
+					return
+				}
 
-			err = storage.SaveToCSV(data, outputFile)
-			if err != nil {
-				log.Printf("Error saving CSV for stock %s: %v", stockNumber, err)
-				return
-			}
-			log.Printf("Successfully scraped and saved data for stock %s", stockNumber)
-		}(stock)
+				// Build output filename including the scraper type.
+				outputFile := filepath.Join(stockOutputDir, scraperType+".csv")
+				if storage.IsFileUpToDate(outputFile) {
+					log.Printf("Stock %s data is up-to-date. Skipping.", stockNumber)
+					return
+				}
+
+				scraperInstance, err := scraper.NewScraper(scraperType, pw)
+				if err != nil {
+					log.Printf("Error creating scraper for stock %s: %v", stockNumber, err)
+					return
+				}
+
+				data, err := scraperInstance.Scrape(stockNumber, startDate, endDate)
+				if err != nil {
+					log.Printf("Error scraping stock %s: %v", stockNumber, err)
+					return
+				}
+
+				err = storage.SaveToCSV(data, outputFile)
+				if err != nil {
+					log.Printf("Error saving CSV for stock %s: %v", stockNumber, err)
+					return
+				}
+				log.Printf(
+					"Successfully scraped and saved data for %s : %s",
+					scraperType,
+					stockNumber,
+				)
+			}(stock, sType)
+		}
 	}
 
 	wg.Wait()
