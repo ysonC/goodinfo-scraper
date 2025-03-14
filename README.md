@@ -1,133 +1,93 @@
 # Stock Scraper
 
-This repository provides a Go-based scraper to gather weekly stock price and valuation data from [goodinfo.tw](https://goodinfo.tw). The scraper reads a list of stock numbers from CSV files in an `input_stock` folder, fetches the data, and saves the results as CSV files into an `output_stock` folder.
+A Go-based web scraper that collects various financial data, including weekly stock prices, PER valuations, monthly revenue, and cash flow statements from [goodinfo.tw](https://goodinfo.tw).
 
-## Features
+## Key Features
 
-- **Concurrent Downloads**  
-  Utilizes a worker pool (`maxWorkers = 10` by default) to download data for multiple stocks in parallel.
+- **Concurrent Scraping**: Configurable concurrency with interactive prompts (default: 10 workers).
+- **Date Range Selection**: Supports custom or predefined date ranges.
+- **Data Types**: Includes PER, stock data, monthly revenue, and cash flow.
+- **Dynamic Web Scraping**: Utilizes headless browsers via [Playwright-Go](https://github.com/playwright-community/playwright-go).
+- **Structured CSV Output**: Results are organized into individual CSV files per stock in structured directories.
 
-- **Up-to-Date Checks**  
-  Skips downloading data if the output CSV for a stock is already current (i.e., generated or modified today).
-
-- **Automatic CSV Output**  
-  Each stock’s data is written to a separate CSV file (e.g., `2330.csv`) in the `output_stock` folder.
-
-- **Headless Browsing with Playwright**  
-  Uses Playwright (through the [playwright-go](https://github.com/playwright-community/playwright-go) library) to load and parse dynamic web content.
-
-## Directory Structure
+## Project Structure
 
 ```
 .
 ├── .gitignore
 ├── Dockerfile
+├── README.md
+├── cmd
+│   └── main.go
+├── criteria.md
 ├── go.mod
 ├── go.sum
-├── input_stock/
-│   └── all_stocks_number.txt
-├── output_stock/
-├── scraper.go
-└── ...
+├── sample
+│   └── final-output.xlsx
+├── scraper
+│   ├── base.go
+│   ├── cashflow.go
+│   ├── factory.go
+│   ├── per.go
+│   ├── sale.go
+│   ├── scraper.go
+│   └── stockdata.go
+└── storage
+    └── csv_writer.go
 ```
 
-- **`input_stock/`**: Contains one or more files with stock numbers. Each line in a file represents a single stock number.
-- **`output_stock/`**: Populated with CSV files for each stock that is successfully scraped.
-- **`go.mod` / `go.sum`**: Go modules and dependency tracking.
-- **`scraper.go`**: Main Go application that reads stock numbers, fetches data from the target site, and writes results.
+- **`input_stock/`**: Place files containing stock numbers (one per line).
+- **`output_stock/`**: Automatically generated CSV output.
 
-> **Note**: By default, the scraper reads every CSV file in `input_stock`. An example file is `all_stocks_number.txt`, which lists a large set of stock numbers, one per line.
+## Local Installation
 
-## Prerequisites (Local Development)
+### Requirements
 
-1. **Go 1.24 or later**  
-   Make sure you have [Go](https://go.dev/) installed and properly set up (`GOPATH`, etc.).
+- **Go 1.24+** ([Download](https://go.dev/))
+- **Playwright dependencies**:
+  ```bash
+  go run github.com/playwright-community/playwright-go/cmd/playwright install
+  ```
 
-2. **Playwright dependencies**  
-   The scraper uses Playwright for Go. On most systems, you need to install the necessary browser dependencies.  
-   - Check [Playwright’s official docs](https://playwright.dev/) for the list of OS packages needed for Chromium/Firefox/WebKit.
-   - Installing [Node.js](https://nodejs.org/) can help if you need the `npx playwright install` command.
-   - Install the Playwright driver for go with the command below.
-```
-go run github.com/playwright-community/playwright-go/cmd/playwright install
-```
-## Installation (Local)
+### Setup
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-username/stock-scraper.git
-   cd stock-scraper
-   ```
-2. **Download Go modules**:
-   ```bash
-   go mod download
-   ```
-   This fetches all required dependencies as specified in `go.mod` / `go.sum`.
-
-## Usage (Local)
-
-1. **Prepare your stock numbers**  
-   - Place CSV files in the `input_stock` folder (one stock number per line).
-2. **Run the scraper**  
-   ```bash
-   go run scraper.go
-   ```
-   or build and then run:
-   ```bash
-   go build -o scraper .
-   ./scraper
-   ```
-   The scraper will prompt you to select a date range (e.g., nearest 5 years or a custom range).
-
-3. **Check the output**  
-   - CSV files appear in the `output_stock` folder.
-   - Filenames match the stock number (`<stock>.csv`).  
-   - Each CSV includes a header row and subsequent data rows.
-
-## Running via Docker
-
-If you prefer not to install Go or browser dependencies locally, you can build and run the scraper in a Docker container that includes all necessary dependencies and Playwright binaries.
-
-1. **Build the Docker image**:
-   ```bash
-   docker build -t my-scraper .
-   ```
-   This uses the `Dockerfile` in the repository (a multi-stage build) to:
-   - Compile the Go code.
-   - Install the Playwright-Go driver.
-   - Copy everything into a Playwright-enabled base image.
-
-2. **Run the Docker container** (interactive mode is required for date-range input):
-   ```bash
-   docker run -it --rm \
-     -v $(pwd)/output_stock:/app/output_stock \
-     -v $(pwd)/input_stock:/app/input_stock \
-     my-scraper
-   ```
-   - Run in interactive mode with mounted volume to access CSV files on your host.
-   - When prompted, select `1` for “Nearest 5 years” or `2` for “Custom range,” and then provide any required dates.
-
-
-## Customizing the Concurrency
-
-In `scraper.go`, find:
-
-```go
-const maxWorkers = 10
+```bash
+git clone https://github.com/your-username/stock-scraper.git
+cd stock-scraper
+go mod download
 ```
 
-Change `10` to whatever concurrency you prefer.
+## Running Locally
 
-## Troubleshooting
+```bash
+go run cmd/main.go
+```
 
-1. **Playwright Browser Issues**  
-   - If running locally, ensure you have the OS libraries to run headless Chromium.  
-   - In Docker, the provided Dockerfile includes these dependencies.
+Follow the interactive prompts to:
+- Select the maximum number of workers.
+- Choose data types.
+- Specify date ranges.
 
-2. **File Permission Errors**  
-   - Ensure `input_stock` and `output_stock` exist and are writable. If mounting volumes in Docker, check your host’s directory permissions.
+## Docker Usage
 
-3. **Data Missing or Incorrect**  
-   - Verify `goodinfo.tw` is accessible (sometimes it blocks requests or changes the layout).
-   - Check that your stock numbers are valid and properly formatted.
+### Building Docker Image
+
+```bash
+docker build -t my-scraper .
+```
+
+### Running Docker Container
+
+```bash
+docker run -it --rm \
+  -v $(pwd)/output_stock:/app/output_stock \
+  -v $(pwd)/input_stock:/app/input_stock \
+  my-scraper
+```
+
+## Customizing Concurrency
+
+Modify the number of concurrent workers through the interactive prompt upon running the scraper, or adjust defaults directly in `cmd/main.go`.
+
+---
 
