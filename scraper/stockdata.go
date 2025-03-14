@@ -2,10 +2,10 @@ package scraper
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/playwright-community/playwright-go"
+
+	"github.com/ysonC/multi-stocks-download/helper"
 )
 
 // StockDataScraper implements the scraper for stock data.
@@ -33,25 +33,5 @@ func (p *StockDataScraper) Scrape(stockNumber, startDate, endDate string) ([][]s
 		return nil, err
 	}
 	// For stock data, extract all columns including header.
-	return extractFullTableData(html)
-}
-
-// extractFullTableData parses the table HTML without skipping the header.
-func extractFullTableData(html string) ([][]string, error) {
-	var data [][]string
-	wrappedHTML := "<table>" + html + "</table>"
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(wrappedHTML))
-	if err != nil {
-		return nil, err
-	}
-	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
-		var row []string
-		s.Find("td").Each(func(j int, cell *goquery.Selection) {
-			row = append(row, strings.TrimSpace(cell.Text()))
-		})
-		if len(row) > 0 {
-			data = append(data, row)
-		}
-	})
-	return data, nil
+	return helper.ExtractFullTableData(html)
 }

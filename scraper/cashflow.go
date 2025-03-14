@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/playwright-community/playwright-go"
+
+	"github.com/ysonC/multi-stocks-download/helper"
 )
 
 // PERScraper implements the scraper for PER data.
@@ -29,5 +31,5 @@ func (p *CashflowScraper) Scrape(stockNumber, startDate, endDate string) ([][]st
 	if err != nil {
 		return nil, err
 	}
-	return extractFullTableData(html)
+	return helper.ExtractFullTableData(html)
 }

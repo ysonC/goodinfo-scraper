@@ -5,7 +5,21 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 )
+
+func checkSpace(record []string) {
+	if slices.Contains(record, "") {
+		fmt.Println("Empty value found,")
+		for i, v := range record {
+			if v == "" {
+				fmt.Printf("Empty value found at index %d\n", i)
+			}
+		}
+		return
+	}
+	fmt.Println("No empty value found")
+}
 
 func readCSVFile(filePath string) {
 	file, err := os.Open(filePath)
@@ -23,8 +37,8 @@ func readCSVFile(filePath string) {
 		if err != nil {
 			break
 		}
+
 		counterInt++
-		// fmt.Println(record)
 	}
 	fmt.Printf("Total lines: %d\n", counterInt)
 }
