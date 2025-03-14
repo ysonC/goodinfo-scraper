@@ -54,7 +54,8 @@ func extractTableData(html string, maxColumns int, skipHeader bool) ([][]string,
 			}
 		})
 		// Optionally filter out rows (e.g., those ending with "W53").
-		if len(row) > 0 && !strings.HasSuffix(row[0], "W53") {
+		// if len(row) > 0 && !strings.HasSuffix(row[0], "W53") {
+		if len(row) > 0 {
 			data = append(data, row)
 		}
 	})
