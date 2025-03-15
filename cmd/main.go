@@ -209,6 +209,7 @@ func main() {
 					log.Printf("Error saving CSV for stock %s: %v", stockNumber, err)
 					return
 				}
+
 				log.Printf(
 					"Successfully scraped and saved data for %s : %s",
 					scraperType,
@@ -220,4 +221,15 @@ func main() {
 
 	wg.Wait()
 	log.Println("Scraping completed.")
+
+	for _, stock := range stocks {
+		stockOutputDir := filepath.Join(outputDir, stock)
+		err = storage.CombineAllCSVInFolder(stockOutputDir)
+		if err != nil {
+			log.Printf("Error combining CSV files: %v", err)
+			return
+		}
+		log.Printf("Combined all CSV files for stock %s", stock)
+	}
+	log.Println("All done!")
 }
