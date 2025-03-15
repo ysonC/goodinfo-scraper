@@ -1,14 +1,16 @@
 # Stock Scraper
 
-A Go-based web scraper that collects various financial data, including weekly stock prices, PER valuations, monthly revenue, and cash flow statements from [goodinfo.tw](https://goodinfo.tw).
+A Go-based web scraper that collects various financial data—including weekly stock prices, PER valuations, monthly revenue, and cash flow statements—from [goodinfo.tw](https://goodinfo.tw).
 
 ## Key Features
 
 - **Concurrent Scraping**: Configurable concurrency with interactive prompts (default: 10 workers).
 - **Date Range Selection**: Supports custom or predefined date ranges.
-- **Data Types**: Includes PER, stock data, monthly revenue, and cash flow.
-- **Dynamic Web Scraping**: Utilizes headless browsers via [Playwright-Go](https://github.com/playwright-community/playwright-go).
-- **Structured CSV Output**: Results are organized into individual CSV files per stock in structured directories.
+- **Data Types**: Scrapes PER, stock data, monthly revenue, and cash flow.
+- **Dynamic Web Scraping**: Uses headless browsers via [Playwright-Go](https://github.com/playwright-community/playwright-go).
+- **Structured Output**:  
+  - **CSV Files**: Saved per stock in the `downloaded_stock/` directory (one subfolder per stock).  
+  - **XLSX Files**: Final combined spreadsheets stored in the `final_output/` directory (one per stock).
 
 ## Project Structure
 
@@ -22,6 +24,8 @@ A Go-based web scraper that collects various financial data, including weekly st
 ├── criteria.md
 ├── go.mod
 ├── go.sum
+├── helper
+│   └── helper.go
 ├── sample
 │   └── final-output.xlsx
 ├── scraper
@@ -36,20 +40,25 @@ A Go-based web scraper that collects various financial data, including weekly st
     └── csv_writer.go
 ```
 
-- **`input_stock/`**: Place files containing stock numbers (one per line).
-- **`output_stock/`**: Automatically generated CSV output.
+- **`input_stock/`**: Place files here that contain stock numbers (one per line).
+- **`downloaded_stock/`**: CSV output is saved here for each stock in its own subfolder.
+- **`final_output/`**: Final XLSX output for each stock is generated here by combining CSV files.
 
 ## Local Installation
 
 ### Requirements
 
 - **Go 1.24+** ([Download](https://go.dev/))
-- **Playwright dependencies**:
+- **Playwright Dependencies**:  
+  Install the Playwright driver by running:
+  
   ```bash
   go run github.com/playwright-community/playwright-go/cmd/playwright install
   ```
 
 ### Setup
+
+Clone the repository and download dependencies:
 
 ```bash
 git clone https://github.com/your-username/stock-scraper.git
@@ -59,35 +68,47 @@ go mod download
 
 ## Running Locally
 
+Run the scraper using:
+
 ```bash
 go run cmd/main.go
 ```
 
-Follow the interactive prompts to:
+You will be prompted to:
 - Select the maximum number of workers.
-- Choose data types.
-- Specify date ranges.
+- Specify the date range (either default or custom).
+
+After scraping completes:
+- **CSV files** for each stock are saved under `downloaded_stock/` (each stock has its own subfolder).
+- A **final XLSX file** is generated per stock in `final_output/`, combining the CSV data into multiple sheets.
 
 ## Docker Usage
 
-### Building Docker Image
+### Building the Docker Image
 
 ```bash
 docker build -t my-scraper .
 ```
 
-### Running Docker Container
+### Running the Docker Container
 
 ```bash
 docker run -it --rm \
-  -v $(pwd)/output_stock:/app/output_stock \
-  -v $(pwd)/input_stock:/app/input_stock \
+  -v "$(pwd)/downloaded_stock:/app/downloaded_stock" \
+  -v "$(pwd)/final_output:/app/final_output" \
+  -v "$(pwd)/input_stock:/app/input_stock" \
   my-scraper
 ```
 
+Adjust the volume mounts if your local directories differ.
+
 ## Customizing Concurrency
 
-Modify the number of concurrent workers through the interactive prompt upon running the scraper, or adjust defaults directly in `cmd/main.go`.
+- The number of concurrent workers is configurable via the interactive prompt when running the scraper. The default is set to 10 workers.
+- The website may block your IP if you set the number of workers too high. If you encounter issues, reduce the number of workers.
+- Tested with up to 100 words without issues.
 
----
+## Additional Information
 
+- **CSV Combination**: The application verifies that required files (e.g., files containing "per", "stockdata", "monthlyrevenue", "cashflow") exist in each stock's output folder before combining them into the final XLSX.
+- **XLSX Output**: The combined XLSX file features multiple sheets (e.g., one sheet for PER/stock data and another for monthly revenue/cash flow). This format is designed to provide a clear overview of all scraped data for each stock.
