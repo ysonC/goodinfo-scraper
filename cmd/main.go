@@ -72,29 +72,29 @@ func selectDateRange() (string, string, error) {
 }
 
 // selectScraperType lets the user choose which type of data to scrape.
-func selectScraperType() (string, error) {
-	fmt.Println("Select scraper type:")
-	fmt.Println("1. PER")
-	fmt.Println("2. Stock Data")
-	fmt.Println("3. Monthly Revenue")
-	fmt.Println("4. Cashflow")
-	fmt.Print("Enter option: ")
-
-	var input string
-	fmt.Scanln(&input)
-	switch input {
-	case "1":
-		return "per", nil
-	case "2":
-		return "stockdata", nil
-	case "3":
-		return "monthlyrevenue", nil
-	case "4":
-		return "cashflow", nil
-	default:
-		return "", fmt.Errorf("invalid option")
-	}
-}
+// func selectScraperType() (string, error) {
+// 	fmt.Println("Select scraper type:")
+// 	fmt.Println("1. PER")
+// 	fmt.Println("2. Stock Data")
+// 	fmt.Println("3. Monthly Revenue")
+// 	fmt.Println("4. Cashflow")
+// 	fmt.Print("Enter option: ")
+//
+// 	var input string
+// 	fmt.Scanln(&input)
+// 	switch input {
+// 	case "1":
+// 		return "per", nil
+// 	case "2":
+// 		return "stockdata", nil
+// 	case "3":
+// 		return "monthlyrevenue", nil
+// 	case "4":
+// 		return "cashflow", nil
+// 	default:
+// 		return "", fmt.Errorf("invalid option")
+// 	}
+// }
 
 // readStockNumbersFromFolder reads stock numbers (one per line) from files in the input folder.
 func readStockNumbersFromFolder(folderPath string) ([]string, error) {
@@ -226,16 +226,20 @@ func main() {
 	wg.Wait()
 	log.Println("Scraping completed.")
 
+	errStocks := []string{}
 	for _, stock := range stocks {
 		stockOutputDir := filepath.Join(downloadDir, stock)
 		finalOutputFile := filepath.Join(finalOutputDir, stock+".xlsx")
 		err = storage.CombineAllCSVInFolderToXLSX(stockOutputDir, finalOutputFile)
 		if err != nil {
 			log.Printf("Error combining CSV files: %v", err)
-			return
+			errStocks = append(errStocks, stock)
 		}
 
 		log.Printf("Combined all CSV files for stock %s", stock)
+	}
+	if len(errStocks) > 0 {
+		log.Printf("Errors occurred for the following stocks: %v", errStocks)
 	}
 	log.Println("All done!")
 }
