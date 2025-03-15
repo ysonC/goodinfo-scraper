@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	inputDir  = "input_stock"
-	outputDir = "output_stock"
+	inputDir       = "input_stock"
+	downloadDir    = "downloaded_stock"
+	finalOutputDir = "final_output"
 )
 
 func selectMaxWorkers() (int, error) {
@@ -130,8 +131,11 @@ func main() {
 	log.Println("Starting scraper application...")
 
 	// Ensure output directory exists.
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := os.MkdirAll(downloadDir, 0755); err != nil {
 		log.Fatalf("Failed to create output directory: %v", err)
+	}
+	if err := os.MkdirAll(finalOutputDir, 0755); err != nil {
+		log.Fatalf("Failed to create final output directory: %v", err)
 	}
 
 	stocks, err := readStockNumbersFromFolder(inputDir)
@@ -175,7 +179,7 @@ func main() {
 				defer func() { <-sem }()
 
 				// Create an output folder for each stock.
-				stockOutputDir := filepath.Join(outputDir, stockNumber)
+				stockOutputDir := filepath.Join(downloadDir, stockNumber)
 				if err := os.MkdirAll(stockOutputDir, 0755); err != nil {
 					log.Printf(
 						"Failed to create output directory for stock %s: %v",
@@ -223,7 +227,14 @@ func main() {
 	log.Println("Scraping completed.")
 
 	for _, stock := range stocks {
-		stockOutputDir := filepath.Join(outputDir, stock)
+		stockOutputDir := filepath.Join(downloadDir, stock)
+		finalOutputFile := filepath.Join(finalOutputDir, stock+".xlsx")
+		err = storage.CombineAllCSVInFolderToXLSX(stockOutputDir, finalOutputFile)
+		if err != nil {
+			log.Printf("Error combining CSV files: %v", err)
+			return
+		}
+
 		err = storage.CombineAllCSVInFolder(stockOutputDir)
 		if err != nil {
 			log.Printf("Error combining CSV files: %v", err)

@@ -5,3 +5,6 @@ all_stocks_number.txt
 input_stock/one_stock.txt
 input_stock/all_stocks_number.txt
 all.txt
+downloaded_stock
+final_output
+playground.go
