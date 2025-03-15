@@ -1,10 +1,12 @@
 ---
 tags: []
-creation_date: "2025-03-14"
+creation_date: "2025-03-15"
 ---
 
 ## To Do:
-- [ ] Add test cases for the download functions, test if the download files have the correct full content.
+- [x] Add test cases for the download functions, test if the download files have the correct full content.
+- [ ] Add list to catch error stocks in the download functions and a list to catch the stocks that download successfully.
+- [ ] Change combine csv function to only combine stocks that are in the success list.
 
 ## Sheet 1 Update
 - Remove Columns G ~ L (Different PER Price)

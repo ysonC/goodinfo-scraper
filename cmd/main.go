@@ -235,11 +235,6 @@ func main() {
 			return
 		}
 
-		err = storage.CombineAllCSVInFolder(stockOutputDir)
-		if err != nil {
-			log.Printf("Error combining CSV files: %v", err)
-			return
-		}
 		log.Printf("Combined all CSV files for stock %s", stock)
 	}
 	log.Println("All done!")
