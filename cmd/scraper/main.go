@@ -2,6 +2,9 @@ package main
 
 import (
 	"log"
+
+	"github.com/ysonC/multi-stocks-download/internal/helper"
+	"github.com/ysonC/multi-stocks-download/internal/scraper"
 )
 
 const (
@@ -13,28 +16,29 @@ const (
 func main() {
 	log.Println("Starting scraper application...")
 
-	setupDirectories(downloadDir, finalOutputDir)
-	stocks := getStockNumbers(inputDir)
-	maxWorkers := promptMaxWorkers()
-	startDate, endDate := promptDateRange()
+	helper.SetupDirectories(downloadDir, finalOutputDir)
+	stocks := helper.GetStockNumbers(inputDir)
+	maxWorkers := helper.PromptMaxWorkers()
+	startDate, endDate := helper.PromptDateRange()
 
-	pw := setupPlaywright()
+	pw := helper.SetupPlaywright()
 	defer pw.Stop()
 
 	scraperTypes := []string{"per", "stockdata", "monthlyrevenue", "cashflow"}
-	successStocks, errorStocks := scrapeAllStocks(
+	successStocks, errorStocks := scraper.ScrapeAllStocks(
 		pw,
 		stocks,
 		scraperTypes,
 		startDate,
 		endDate,
 		maxWorkers,
+		downloadDir,
 	)
 	if len(errorStocks) > 0 {
 		log.Println("Some tasks failed. Please check the logs for more information.")
 	}
 
-	combineSuccessfulStocks(successStocks)
+	scraper.CombineSuccessfulStocks(successStocks, downloadDir, finalOutputDir)
 
 	log.Println("All tasks completed successfully.")
 }

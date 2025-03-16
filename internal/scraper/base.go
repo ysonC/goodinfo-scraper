@@ -8,7 +8,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/playwright-community/playwright-go"
 
-	"github.com/ysonC/multi-stocks-download/helper"
+	"github.com/ysonC/multi-stocks-download/internal/helper"
 )
 
 // BaseScraper encapsulates shared browser and page logic.

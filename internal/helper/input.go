@@ -1,4 +1,4 @@
-package main
+package helper
 
 import (
 	"bufio"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func getStockNumbers(folderPath string) []string {
+func GetStockNumbers(folderPath string) []string {
 	var stocks []string
 	files, err := os.ReadDir(folderPath)
 	if err != nil {
@@ -42,7 +42,7 @@ func getStockNumbers(folderPath string) []string {
 	return stocks
 }
 
-func promptMaxWorkers() int {
+func PromptMaxWorkers() int {
 	options := map[string]int{"1": 10, "2": 20, "3": 30, "4": 100}
 	for {
 		fmt.Println("Select max workers:")
@@ -58,8 +58,8 @@ func promptMaxWorkers() int {
 	}
 }
 
-func promptDateRange() (string, string) {
-	fmt.Println("Select date range:\n1. Max\n2. Custom")
+func PromptDateRange() (string, string) {
+	fmt.Println("Select date range:\n1. Max\n2. Custom (Format: YYYY-MM-DD)")
 	var choice string
 	fmt.Scanln(&choice)
 	switch choice {

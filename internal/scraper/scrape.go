@@ -1,4 +1,4 @@
-package main
+package scraper
 
 import (
 	"log"
@@ -8,15 +8,15 @@ import (
 
 	"github.com/playwright-community/playwright-go"
 
-	"github.com/ysonC/multi-stocks-download/scraper"
-	"github.com/ysonC/multi-stocks-download/storage"
+	"github.com/ysonC/multi-stocks-download/internal/storage"
 )
 
-func scrapeAllStocks(
+func ScrapeAllStocks(
 	pw *playwright.Playwright,
 	stocks, scraperTypes []string,
 	startDate, endDate string,
 	maxWorkers int,
+	downloadDir string,
 ) ([]string, []string) {
 	var (
 		wg           sync.WaitGroup
@@ -47,7 +47,7 @@ func scrapeAllStocks(
 					return
 				}
 
-				instance, err := scraper.NewScraper(scraperType, pw)
+				instance, err := NewScraper(scraperType, pw)
 				if err != nil {
 					log.Printf("Scraper creation error (%s) %s: %v", scraperType, stockNumber, err)
 					return
@@ -75,6 +75,23 @@ func scrapeAllStocks(
 
 	wg.Wait()
 
+	// Return successful and error stocks
+	return checkDownloadStocks(successCount, totalTypes)
+}
+
+func CombineSuccessfulStocks(stocks []string, downloadDir, finalOutputDir string) {
+	for _, stock := range stocks {
+		stockDir := filepath.Join(downloadDir, stock)
+		finalOutput := filepath.Join(finalOutputDir, stock+".xlsx")
+		if err := storage.CombineAllCSVInFolderToXLSX(stockDir, finalOutput); err != nil {
+			log.Printf("Error combining stock %s: %v", stock, err)
+			continue
+		}
+		log.Printf("Successfully combined data for stock %s", stock)
+	}
+}
+
+func checkDownloadStocks(successCount map[string]int, totalTypes int) ([]string, []string) {
 	var successfulStocks []string
 	var errorStocks []string
 	for stock, count := range successCount {
@@ -85,17 +102,8 @@ func scrapeAllStocks(
 			log.Printf("Incomplete data for stock %s; skipping combine.", stock)
 		}
 	}
-	return successfulStocks, errorStocks
-}
-
-func combineSuccessfulStocks(stocks []string) {
-	for _, stock := range stocks {
-		stockDir := filepath.Join(downloadDir, stock)
-		finalOutput := filepath.Join(finalOutputDir, stock+".xlsx")
-		if err := storage.CombineAllCSVInFolderToXLSX(stockDir, finalOutput); err != nil {
-			log.Printf("Error combining stock %s: %v", stock, err)
-			continue
-		}
-		log.Printf("Successfully combined data for stock %s", stock)
+	if len(errorStocks) > 0 {
+		log.Println("Some tasks failed. Please check the logs for more information.")
 	}
+	return successfulStocks, errorStocks
 }
