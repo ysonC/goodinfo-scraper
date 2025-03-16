@@ -79,18 +79,6 @@ func ScrapeAllStocks(
 	return checkDownloadStocks(successCount, totalTypes)
 }
 
-func CombineSuccessfulStocks(stocks []string, downloadDir, finalOutputDir string) {
-	for _, stock := range stocks {
-		stockDir := filepath.Join(downloadDir, stock)
-		finalOutput := filepath.Join(finalOutputDir, stock+".xlsx")
-		if err := storage.CombineAllCSVInFolderToXLSX(stockDir, finalOutput); err != nil {
-			log.Printf("Error combining stock %s: %v", stock, err)
-			continue
-		}
-		log.Printf("Successfully combined data for stock %s", stock)
-	}
-}
-
 func checkDownloadStocks(successCount map[string]int, totalTypes int) ([]string, []string) {
 	var successfulStocks []string
 	var errorStocks []string

@@ -5,6 +5,7 @@ import (
 
 	"github.com/ysonC/multi-stocks-download/internal/helper"
 	"github.com/ysonC/multi-stocks-download/internal/scraper"
+	"github.com/ysonC/multi-stocks-download/internal/storage"
 )
 
 const (
@@ -38,7 +39,7 @@ func main() {
 		log.Println("Some tasks failed. Please check the logs for more information.")
 	}
 
-	scraper.CombineSuccessfulStocks(successStocks, downloadDir, finalOutputDir)
+	storage.CombineSuccessfulStocks(successStocks, downloadDir, finalOutputDir)
 
 	log.Println("All tasks completed successfully.")
 }
