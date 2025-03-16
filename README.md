@@ -24,11 +24,12 @@ A Go-based web scraper that collects various financial data—including weekly s
 ├── go.mod
 ├── go.sum
 ├── internal
-│   ├── helper
-│   │   ├── helper.go
+│   ├── flow 
+│   │   ├── setup.go 
 │   │   ├── input.go
-│   │   ├── setup.go
-│   │   └── user_input.go
+│   │   └── user_input.go 
+│   ├── helper
+│   │   └── helper.go
 │   ├── scraper
 │   │   ├── base.go
 │   │   ├── cashflow.go
@@ -63,8 +64,8 @@ A Go-based web scraper that collects various financial data—including weekly s
 Clone the repository and download dependencies:
 
 ```bash
-git clone https://github.com/your-username/stock-scraper.git
-cd stock-scraper
+git clone https://github.com/ysonC/multi-stocks-download.git
+cd multi-stocks-download
 go mod download
 ```
 
