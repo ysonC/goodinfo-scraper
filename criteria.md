@@ -7,8 +7,8 @@ creation_date: "2025-03-16"
 - [x] Add test cases for the download functions, test if the download files have the correct full content.
 - [x] Add list to catch error stocks in the download functions and a list to catch the stocks that download successfully.
 - [x] Change combine csv function to only combine stocks that are in the success list.
-- [ ] Add a function to add headers before combining, one for each sheet.
-- [ ] Organize helper folder into more precise functions.
+- [x] Add a function to add headers before combining, one for each sheet.
+- [x] Organize helper folder into more precise functions.
 - [ ] Add test for each function file
     - [ ] helper
     - [ ] scraper
