@@ -3,8 +3,12 @@ package scraper
 import (
 	"fmt"
 	"log"
+	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/playwright-community/playwright-go"
+
+	"github.com/ysonC/multi-stocks-download/helper"
 )
 
 // BaseScraper encapsulates shared browser and page logic.
@@ -58,4 +62,56 @@ func (b *BaseScraper) fetchHTML(url string) (string, error) {
 		return "", fmt.Errorf("failed to get table HTML: %w", err)
 	}
 	return html, nil
+}
+
+// extractFullTableData parses the table HTML without skipping the header.
+func (b *BaseScraper) extractFullTableData(html string) ([][]string, error) {
+	var data [][]string
+	wrappedHTML := "<table>" + html + "</table>"
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(wrappedHTML))
+	if err != nil {
+		return nil, err
+	}
+	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
+		var row []string
+		s.Find("td").Each(func(j int, cell *goquery.Selection) {
+			row = append(row, strings.TrimSpace(cell.Text()))
+		})
+		row = helper.CheckSpace(row)
+		if len(row) > 0 {
+			data = append(data, row)
+		}
+	})
+	return data, nil
+}
+
+// extractTableData wraps the HTML in a table tag and uses goquery to extract rows.
+func (b *BaseScraper) extractTableData(
+	html string,
+	maxColumns int,
+	skipHeader bool,
+) ([][]string, error) {
+	var data [][]string
+	wrappedHTML := "<table>" + html + "</table>"
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(wrappedHTML))
+	if err != nil {
+		return nil, err
+	}
+	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
+		if skipHeader && i == 0 {
+			return
+		}
+		var row []string
+		s.Find("td").Each(func(j int, cell *goquery.Selection) {
+			if j < maxColumns {
+				row = append(row, strings.TrimSpace(cell.Text()))
+			}
+		})
+		// Optionally filter out rows (e.g., those ending with "W53").
+		// if len(row) > 0 && !strings.HasSuffix(row[0], "W53") {
+		if len(row) > 0 {
+			data = append(data, row)
+		}
+	})
+	return data, nil
 }

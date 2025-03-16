@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/playwright-community/playwright-go"
-
-	"github.com/ysonC/multi-stocks-download/helper"
 )
 
 // PERScraper implements the scraper for PER data.
@@ -31,5 +29,5 @@ func (p *MonthlyRevenueScraper) Scrape(stockNumber, startDate, endDate string) (
 	if err != nil {
 		return nil, err
 	}
-	return helper.ExtractFullTableData(html)
+	return p.base.extractFullTableData(html)
 }

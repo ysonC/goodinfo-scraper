@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/playwright-community/playwright-go"
-
-	"github.com/ysonC/multi-stocks-download/helper"
 )
 
 // StockDataScraper implements the scraper for stock data.
@@ -33,5 +31,5 @@ func (p *StockDataScraper) Scrape(stockNumber, startDate, endDate string) ([][]s
 		return nil, err
 	}
 	// For stock data, extract all columns including header.
-	return helper.ExtractFullTableData(html)
+	return p.base.extractFullTableData(html)
 }

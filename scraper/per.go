@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/playwright-community/playwright-go"
-
-	"github.com/ysonC/multi-stocks-download/helper"
 )
 
 // PERScraper implements the scraper for PER data.
@@ -32,5 +30,5 @@ func (p *PERScraper) Scrape(stockNumber, startDate, endDate string) ([][]string,
 		return nil, err
 	}
 	// For PER data, extract only the first 6 columns and skip the header row.
-	return helper.ExtractTableData(html, 6, true)
+	return p.base.extractTableData(html, 6, true)
 }
