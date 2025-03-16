@@ -9,6 +9,10 @@ creation_date: "2025-03-16"
 - [x] Change combine csv function to only combine stocks that are in the success list.
 - [ ] Add a function to add headers before combining, one for each sheet.
 - [ ] Organize helper folder into more precise functions.
+- [ ] Add test for each function file
+    - [ ] helper
+    - [ ] scraper
+    - [ ] storage
 
 
 ## Sheet 1 Update
