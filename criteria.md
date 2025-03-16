@@ -8,6 +8,7 @@ creation_date: "2025-03-16"
 - [x] Add list to catch error stocks in the download functions and a list to catch the stocks that download successfully.
 - [x] Change combine csv function to only combine stocks that are in the success list.
 - [ ] Add a function to add headers before combining, one for each sheet.
+- [ ] Organize helper folder into more precise functions.
 
 
 ## Sheet 1 Update

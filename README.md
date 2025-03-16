@@ -16,28 +16,30 @@ A Go-based web scraper that collects various financial data—including weekly s
 
 ```
 .
-├── .gitignore
 ├── Dockerfile
 ├── README.md
 ├── cmd
-│   └── main.go
-├── criteria.md
+│   └── scraper
+│       └── main.go
 ├── go.mod
 ├── go.sum
-├── helper
-│   └── helper.go
-├── sample
-│   └── final-output.xlsx
-├── scraper
-│   ├── base.go
-│   ├── cashflow.go
-│   ├── factory.go
-│   ├── per.go
-│   ├── sale.go
-│   ├── scraper.go
-│   └── stockdata.go
-└── storage
-    └── csv_writer.go
+├── internal
+│   ├── helper
+│   │   ├── helper.go
+│   │   ├── input.go
+│   │   ├── setup.go
+│   │   └── user_input.go
+│   ├── scraper
+│   │   ├── base.go
+│   │   ├── cashflow.go
+│   │   ├── factory.go
+│   │   ├── per.go
+│   │   ├── sale.go
+│   │   ├── scrape.go
+│   │   ├── scraper.go
+│   │   └── stockdata.go
+│   └── storage
+│       └── csv_writer.go
 ```
 
 - **`input_stock/`**: Place files here that contain stock numbers (one per line).
@@ -71,7 +73,7 @@ go mod download
 Run the scraper using:
 
 ```bash
-go run cmd/main.go
+go run cmd/scraper/main.go
 ```
 
 You will be prompted to:
