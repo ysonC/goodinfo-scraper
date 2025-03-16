@@ -170,6 +170,12 @@ func main() {
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, maxWorkers)
 
+	var (
+		successStocks = make(map[string]int)
+		mutex         sync.Mutex
+		totalTypes    = len(scraperTypes)
+	)
+
 	for _, stock := range stocks {
 		for _, sType := range scraperTypes {
 			wg.Add(1)
@@ -193,6 +199,9 @@ func main() {
 				outputFile := filepath.Join(stockOutputDir, scraperType+".csv")
 				if storage.IsFileUpToDate(outputFile) {
 					log.Printf("Stock %s data is up-to-date. Skipping.", stockNumber)
+					mutex.Lock()
+					successStocks[stockNumber]++
+					mutex.Unlock()
 					return
 				}
 
@@ -219,6 +228,9 @@ func main() {
 					scraperType,
 					stockNumber,
 				)
+				mutex.Lock()
+				successStocks[stockNumber]++
+				mutex.Unlock()
 			}(stock, sType)
 		}
 	}
@@ -226,20 +238,29 @@ func main() {
 	wg.Wait()
 	log.Println("Scraping completed.")
 
-	errStocks := []string{}
-	for _, stock := range stocks {
+	successStocksList := []string{}
+	for stock, count := range successStocks {
+		if count == totalTypes {
+			successStocksList = append(successStocksList, stock)
+		} else {
+			log.Printf("Stock %s has missing data", stock)
+		}
+	}
+
+	errStocksCombine := []string{}
+	for _, stock := range successStocksList {
 		stockOutputDir := filepath.Join(downloadDir, stock)
 		finalOutputFile := filepath.Join(finalOutputDir, stock+".xlsx")
 		err = storage.CombineAllCSVInFolderToXLSX(stockOutputDir, finalOutputFile)
 		if err != nil {
 			log.Printf("Error combining CSV files: %v", err)
-			errStocks = append(errStocks, stock)
+			errStocksCombine = append(errStocksCombine, stock)
 		}
 
 		log.Printf("Combined all CSV files for stock %s", stock)
 	}
-	if len(errStocks) > 0 {
-		log.Printf("Errors occurred for the following stocks: %v", errStocks)
+	if len(errStocksCombine) > 0 {
+		log.Printf("Errors occurred for the following stocks: %v", errStocksCombine)
 	}
 	log.Println("All done!")
 }
