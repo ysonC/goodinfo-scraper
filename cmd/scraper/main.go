@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/ysonC/multi-stocks-download/internal/helper"
+	"github.com/ysonC/multi-stocks-download/internal/flow"
 	"github.com/ysonC/multi-stocks-download/internal/scraper"
 	"github.com/ysonC/multi-stocks-download/internal/storage"
 )
@@ -17,12 +17,12 @@ const (
 func main() {
 	log.Println("Starting scraper application...")
 
-	helper.SetupDirectories(downloadDir, finalOutputDir)
-	stocks := helper.GetStockNumbers(inputDir)
-	maxWorkers := helper.PromptMaxWorkers()
-	startDate, endDate := helper.PromptDateRange()
+	flow.SetupDirectories(downloadDir, finalOutputDir)
+	stocks := flow.GetStockNumbers(inputDir)
+	maxWorkers := flow.PromptMaxWorkers()
+	startDate, endDate := flow.PromptDateRange()
 
-	pw := helper.SetupPlaywright()
+	pw := flow.SetupPlaywright()
 	defer pw.Stop()
 
 	scraperTypes := []string{"per", "stockdata", "monthlyrevenue", "cashflow"}
