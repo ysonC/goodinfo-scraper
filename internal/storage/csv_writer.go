@@ -3,32 +3,10 @@ package storage
 import (
 	"encoding/csv"
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"strings"
 	"time"
 )
-
-// SaveToCSV writes a 2D string slice to a CSV file.
-func SaveToCSV(data [][]string, filePath string) error {
-	file, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	// Optionally write a header row if needed.
-	for _, row := range data {
-		if err := writer.Write(row); err != nil {
-			log.Printf("Error writing row: %v", err)
-		}
-	}
-	return nil
-}
 
 // IsFileUpToDate checks if the file exists and was modified today.
 func IsFileUpToDate(filePath string) bool {
@@ -41,60 +19,59 @@ func IsFileUpToDate(filePath string) bool {
 	return now.Year() == modTime.Year() && now.YearDay() == modTime.YearDay()
 }
 
-func combineTwoCSV(filePath1, filePath2 string) [][]string {
-	file1, err := os.Open(filePath1)
-	if err != nil {
-		log.Fatalf("Error opening file: %v", err)
-	}
-	defer file1.Close()
-
-	file2, err := os.Open(filePath2)
-	if err != nil {
-		log.Fatalf("Error opening file: %v", err)
-	}
-	defer file2.Close()
-
-	reader1 := csv.NewReader(file1)
-	reader2 := csv.NewReader(file2)
-
-	var combineFiles [][]string
-	for {
-		firstRowFile1, err1 := reader1.Read()
-		firstRowFile2, err2 := reader2.Read()
-
-		if err1 == io.EOF && err2 == io.EOF {
-			break
-		}
-		if err1 == io.EOF {
-			firstRowFile1 = []string{"-"}
-		} else if err1 != nil {
-			log.Fatalf("Error reading file1: %v", err1)
-		}
-		if err2 == io.EOF {
-			firstRowFile2 = []string{"-"}
-		} else if err2 != nil {
-			log.Fatalf("Error reading file2: %v", err2)
-		}
-
-		combineRows := append(firstRowFile1, "")
-		combineRows = append(combineRows, firstRowFile2...)
-		combineFiles = append(combineFiles, combineRows)
-	}
-	return combineFiles
-}
-
-func CombineAllCSVInFolder(folderPath string) error {
+func ReadDirFiles(folderPath string) ([]string, error) {
 	files, err := os.ReadDir(folderPath)
 	if err != nil {
-		return fmt.Errorf("failed to read directory: %v", err)
+		return nil, err
 	}
+
+	var fileNames []string
+	for _, file := range files {
+		fileNames = append(fileNames, file.Name())
+	}
+	return fileNames, nil
+}
+
+func ReadCSV(filepath string) ([][]string, error) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	data, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func WriteCSV(filepath string, data [][]string) error {
+	file, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	for _, row := range data {
+		if err := writer.Write(row); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func CheckFileExist(fileNames []string) error {
 	checkList := []string{"per", "stockdata", "monthlyrevenue", "cashflow"}
-	// Ensure all required files are present.
 	for _, check := range checkList {
 		found := false
 
-		for _, file := range files {
-			if strings.Contains(file.Name(), check) {
+		for _, file := range fileNames {
+			if strings.Contains(file, check) {
 				found = true
 				break
 			}
@@ -103,14 +80,35 @@ func CombineAllCSVInFolder(folderPath string) error {
 			return fmt.Errorf("missing file: %s", check)
 		}
 	}
-
-	// Combine all files.
-	perAndStockData := combineTwoCSV(folderPath+"/per.csv", folderPath+"/stockdata.csv")
-	SaveToCSV(perAndStockData, folderPath+"/combine.csv")
-	monthlyRevenueAndCashflow := combineTwoCSV(
-		folderPath+"/monthlyrevenue.csv",
-		folderPath+"/cashflow.csv",
-	)
-	SaveToCSV(monthlyRevenueAndCashflow, folderPath+"/combine2.csv")
 	return nil
+}
+
+func MergeCSVData(csv1, csv2 [][]string) ([][]string, error) {
+	if len(csv1) == 0 || len(csv2) == 0 {
+		return nil, fmt.Errorf("empty csv data")
+	}
+
+	var merged [][]string
+	maxRows := max(len(csv1), len(csv2))
+	for i := range maxRows {
+		row1 := []string{"-"}
+		row2 := []string{"-"}
+		if i < len(csv1) {
+			row1 = csv1[i]
+		}
+		if i < len(csv2) {
+			row2 = csv2[i]
+		}
+		combinedRows := append(row1, "")
+		combinedRows = append(combinedRows, row2...)
+		merged = append(merged, combinedRows)
+	}
+	return merged, nil
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

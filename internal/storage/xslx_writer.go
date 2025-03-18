@@ -3,46 +3,46 @@ package storage
 import (
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/xuri/excelize/v2"
 )
 
 func combineAllCSVInFolderToXLSX(folderPath, xlsxOutputPath string) error {
-	// Define required keywords.
-	checkList := []string{"per", "stockdata", "monthlyrevenue", "cashflow"}
-	// Read folder files.
-	files, err := os.ReadDir(folderPath)
+	files, err := ReadDirFiles(folderPath)
 	if err != nil {
 		return fmt.Errorf("failed to read directory: %v", err)
 	}
-
-	// Ensure each required keyword is found in at least one file name.
-	for _, check := range checkList {
-		found := false
-		for _, file := range files {
-			if !file.IsDir() &&
-				strings.Contains(strings.ToLower(file.Name()), strings.ToLower(check)) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return fmt.Errorf("missing file containing: %s", check)
-		}
+	err = CheckFileExist(files)
+	if err != nil {
+		return fmt.Errorf("failed to check file existence: %v", err)
+	}
+	perData, err := ReadCSV(folderPath + "/per.csv")
+	if err != nil {
+		return fmt.Errorf("failed to read per.csv: %v", err)
+	}
+	stockData, err := ReadCSV(folderPath + "/stockdata.csv")
+	if err != nil {
+		return fmt.Errorf("failed to read stockdata.csv: %v", err)
+	}
+	monthlyRevenueData, err := ReadCSV(folderPath + "/monthlyrevenue.csv")
+	if err != nil {
+		return fmt.Errorf("failed to read monthlyrevenue.csv: %v", err)
+	}
+	cashflowData, err := ReadCSV(folderPath + "/cashflow.csv")
+	if err != nil {
+		return fmt.Errorf("failed to read cashflow.csv: %v", err)
 	}
 
 	// Combine the CSV data from the two groups.
-	perAndStockData := combineTwoCSV(
-		filepath.Join(folderPath, "per.csv"),
-		filepath.Join(folderPath, "stockdata.csv"),
-	)
-	monthlyRevenueAndCashflow := combineTwoCSV(
-		filepath.Join(folderPath, "monthlyrevenue.csv"),
-		filepath.Join(folderPath, "cashflow.csv"),
-	)
+	perAndStockData, err := MergeCSVData(perData, stockData)
+	if err != nil {
+		return fmt.Errorf("failed to merge per and stock data: %v", err)
+	}
+	monthlyRevenueAndCashflow, err := MergeCSVData(monthlyRevenueData, cashflowData)
+	if err != nil {
+		return fmt.Errorf("failed to merge monthly revenue and cashflow data: %v", err)
+	}
 
 	// Create a new XLSX file.
 	f := excelize.NewFile()

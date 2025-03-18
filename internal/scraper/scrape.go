@@ -59,7 +59,7 @@ func ScrapeAllStocks(
 					return
 				}
 
-				if err := storage.SaveToCSV(data, outputFile); err != nil {
+				if err := storage.WriteCSV(outputFile, data); err != nil {
 					log.Printf("CSV save error (%s) %s: %v", scraperType, stockNumber, err)
 					return
 				}
