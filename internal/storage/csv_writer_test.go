@@ -67,7 +67,7 @@ func TestMergeCSVData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := MergeCSVData(tt.csv1, tt.csv2)
+			got, err := mergeCSVData(tt.csv1, tt.csv2)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MergeCSVData() error = %v, wantErr %v", err, tt.wantErr)
 				return

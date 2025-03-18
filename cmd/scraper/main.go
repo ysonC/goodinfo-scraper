@@ -39,7 +39,10 @@ func main() {
 		log.Println("Some tasks failed. Please check the logs for more information.")
 	}
 
-	storage.CombineSuccessfulStocks(successStocks, downloadDir, finalOutputDir)
+	err := storage.CombineSuccessfulStocks(successStocks, downloadDir, finalOutputDir)
+	if err != nil {
+		log.Fatalf("Error combining successful stocks: %v", err)
+	}
 
 	log.Println("All tasks completed successfully.")
 }
