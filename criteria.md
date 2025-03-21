@@ -10,9 +10,9 @@ creation_date: "2025-03-16"
 - [x] Add a function to add headers before combining, one for each sheet.
 - [x] Organize helper folder into more precise functions.
 - [ ] Add test for each function file
-    - [ ] helper
+    - [x] helper
     - [ ] scraper
-    - [ ] storage
+    - [x] storage
 
 
 ## Sheet 1 Update
