@@ -77,7 +77,10 @@ func (b *BaseScraper) extractFullTableData(html string) ([][]string, error) {
 		s.Find("td").Each(func(j int, cell *goquery.Selection) {
 			row = append(row, strings.TrimSpace(cell.Text()))
 		})
-		row = helper.CheckSpace(row)
+		row, err = helper.CheckSpace(row)
+        if err != nil {
+            return
+        }
 		if len(row) > 0 {
 			data = append(data, row)
 		}

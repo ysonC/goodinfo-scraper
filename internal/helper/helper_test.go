@@ -1,8 +1,10 @@
 package helper_test
 
 import (
-	"github.com/ysonC/multi-stocks-download/internal/helper"
+	"reflect"
 	"testing"
+
+	"github.com/ysonC/multi-stocks-download/internal/helper"
 )
 
 func TestCheckSpace(t *testing.T) {
@@ -26,10 +28,13 @@ func TestCheckSpace(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := helper.CheckSpace(tt.row)
+			got, err := helper.CheckSpace(tt.row)
 			// TODO: update the condition below to compare got with tt.want.
-			if true {
-				t.Errorf("CheckSpace() = %v, want %v", got, tt.want)
+			if err != nil {
+				t.Errorf("CheckSpace() error = %v, want %v", err, tt.want)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CheckSpace() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
