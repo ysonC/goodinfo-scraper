@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/ysonC/multi-stocks-download/internal/flow"
 	"github.com/ysonC/multi-stocks-download/internal/scraper"
@@ -16,6 +17,7 @@ const (
 
 func main() {
 	log.Println("Starting scraper application...")
+	start := time.Now()
 
 	flow.SetupDirectories(inputDir, downloadDir, finalOutputDir)
 	stocks := flow.GetStockNumbers(inputDir)
@@ -26,6 +28,8 @@ func main() {
 	defer pw.Stop()
 
 	scraperTypes := []string{"per", "stockdata", "monthlyrevenue", "cashflow"}
+
+	downloadStart := time.Now()
 	successStocks, errorStocks := scraper.ScrapeAllStocks(
 		pw,
 		stocks,
@@ -35,6 +39,8 @@ func main() {
 		maxWorkers,
 		downloadDir,
 	)
+	log.Printf("Download process completed in %s", time.Since(downloadStart))
+
 	if len(errorStocks) > 0 {
 		log.Println("Some tasks failed. Please check the logs for more information.")
 	}
@@ -44,5 +50,5 @@ func main() {
 		log.Fatalf("Error combining successful stocks: %v", err)
 	}
 
-	log.Println("All tasks completed successfully.")
+	log.Printf("All tasks completed successfully in %s.", time.Since(start))
 }
