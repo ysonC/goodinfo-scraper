@@ -9,7 +9,7 @@ import (
 
 func SetupDirectories(dirs ...string) {
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
 			log.Fatalf("Error creating directory '%s': %v", dir, err)
 		}
 	}

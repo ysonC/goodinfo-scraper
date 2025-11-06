@@ -17,7 +17,7 @@ const (
 func main() {
 	log.Println("Starting scraper application...")
 
-	flow.SetupDirectories(downloadDir, finalOutputDir)
+	flow.SetupDirectories(inputDir, downloadDir, finalOutputDir)
 	stocks := flow.GetStockNumbers(inputDir)
 	maxWorkers := flow.PromptMaxWorkers()
 	startDate, endDate := flow.PromptDateRange()
