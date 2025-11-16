@@ -20,7 +20,7 @@ func NewCashflowScraper(pw *playwright.Playwright) *CashflowScraper {
 // Scrape fetches the PER data by building the URL and parsing the table HTML.
 func (p *CashflowScraper) Scrape(stockNumber, startDate, endDate string) ([][]string, error) {
 	url := fmt.Sprintf(
-		"https://goodinfo.tw/tw/StockCashFlow.asp?STEP=DATA&STOCK_ID=%s&RPT_CAT=M_QUAR&PRICE_ADJ=F&START_DT=%s&END_DT=%s",
+		"https://goodinfo.tw/tw/StockCashFlow.asp?STOCK_ID=%s&RPT_CAT=M_QUAR&PRICE_ADJ=F&START_DT=%s&END_DT=%s",
 		stockNumber,
 		startDate,
 		endDate,

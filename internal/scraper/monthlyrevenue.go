@@ -20,7 +20,7 @@ func NewMonthlyRevenueScraper(pw *playwright.Playwright) *MonthlyRevenueScraper 
 // Scrape fetches the PER data by building the URL and parsing the table HTML.
 func (p *MonthlyRevenueScraper) Scrape(stockNumber, startDate, endDate string) ([][]string, error) {
 	url := fmt.Sprintf(
-		"https://goodinfo.tw/tw/ShowSaleMonChart.asp?STEP=DATA&STOCK_ID=%s&PRICE_ADJ=T&START_DT=%s&END_DT=%s",
+		"https://goodinfo.tw/tw/ShowSaleMonChart.asp?STOCK_ID=%s&PRICE_ADJ=T&START_DT=%s&END_DT=%s",
 		stockNumber,
 		startDate,
 		endDate,

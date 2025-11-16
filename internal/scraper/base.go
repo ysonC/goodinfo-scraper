@@ -25,7 +25,7 @@ func NewBaseScraper(pw *playwright.Playwright) *BaseScraper {
 // and returns the inner HTML of the table element.
 func (b *BaseScraper) fetchHTML(url string) (string, error) {
 	browser, err := b.pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
-		Headless: playwright.Bool(true),
+		Headless: playwright.Bool(false),
 		Args:     []string{"--no-sandbox", "--disable-setuid-sandbox"},
 	})
 	if err != nil {
