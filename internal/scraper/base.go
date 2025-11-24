@@ -2,7 +2,6 @@ package scraper
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -39,23 +38,17 @@ func (b *BaseScraper) fetchHTML(url string) (string, error) {
 	}
 
 	if _, err := page.Goto(url, playwright.PageGotoOptions{
-		WaitUntil: playwright.WaitUntilStateNetworkidle,
+		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 	}); err != nil {
 		return "", fmt.Errorf("failed to goto URL: %w", err)
 	}
 
 	tableLocator := page.Locator("#tblDetail")
-	if err := tableLocator.WaitFor(); err != nil {
-		log.Printf("Warning: table not found")
+	if err := tableLocator.WaitFor(playwright.LocatorWaitForOptions{
+		Timeout: playwright.Float(100),
+	}); err != nil {
+		return "", fmt.Errorf("failed to get table HTML: %w", err)
 	}
-
-	// Now wait until the table has at least 200 rows.
-	// 	if _, err := page.WaitForFunction(`() => {
-	//     return document.querySelector("#tblDetail").querySelectorAll("tr").length >= 200;
-	// }`, nil); err != nil {
-	// 		return "", fmt.Errorf("timeout waiting for table data: %w", err)
-	// 	}
-	//
 
 	html, err := tableLocator.InnerHTML()
 	if err != nil {
