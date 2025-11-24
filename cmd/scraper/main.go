@@ -17,6 +17,7 @@ const (
 	inputDir       = "input_stock"
 	downloadDir    = "downloaded_stock"
 	finalOutputDir = "final_output"
+	failedDir      = "failed_stock"
 )
 
 func main() {
@@ -25,6 +26,12 @@ func main() {
 
 	maxWorkersFlag := flag.Int("workers", 10, "maximum number of concurrent workers (default 10)")
 	flag.IntVar(maxWorkersFlag, "w", 10, "shorthand for -workers")
+	rerunFailedFlag := flag.Bool(
+		"rerun-failed",
+		false,
+		"rerun only failed stocks from the previous run",
+	)
+	flag.BoolVar(rerunFailedFlag, "rf", false, "shorthand for -rerun-failed")
 
 	startDateFlag := flag.String(
 		"start",
@@ -53,6 +60,7 @@ Examples:
 	flag.Parse()
 
 	maxWorkers := *maxWorkersFlag
+	rerunFailed := *rerunFailedFlag
 	if maxWorkers <= 0 {
 		log.Fatalf("Invalid workers value %d, must be > 0", maxWorkers)
 	}
@@ -68,8 +76,23 @@ Examples:
 		log.Fatal("Both -start and -end must be provided together, or neither for max range")
 	}
 
-	flow.SetupDirectories(inputDir, downloadDir, finalOutputDir)
-	stocks := flow.GetStockNumbers(inputDir)
+	flow.SetupDirectories(inputDir, downloadDir, finalOutputDir, failedDir)
+
+	var stocks []string
+	if rerunFailed {
+		var err error
+		stocks, err = storage.LoadFailedStocks(failedDir)
+		if err != nil {
+			log.Fatalf("Failed to load failed stocks: %v", err)
+		}
+		if len(stocks) == 0 {
+			log.Println("No recorded failed stocks to rerun. Exiting.")
+			return
+		}
+		log.Printf("Rerunning %d previously failed stock(s).", len(stocks))
+	} else {
+		stocks = flow.GetStockNumbers(inputDir)
+	}
 
 	pw := flow.SetupPlaywright()
 	defer pw.Stop()
@@ -90,6 +113,10 @@ Examples:
 
 	successCount := len(successStocks)
 	errorCount := len(errorStocks)
+
+	if err := storage.SaveFailedStocks(failedDir, errorStocks); err != nil {
+		log.Fatalf("Failed to write failed stocks list: %v", err)
+	}
 
 	err := storage.CombineSuccessfulStocks(successStocks, downloadDir, finalOutputDir)
 	if err != nil {
