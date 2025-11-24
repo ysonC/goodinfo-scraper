@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ysonC/multi-stocks-download/internal/flow"
@@ -87,14 +88,24 @@ Examples:
 	)
 	log.Printf("Download process completed in %s", time.Since(downloadStart))
 
-	if len(errorStocks) > 0 {
-		log.Println("Some tasks failed. Please check the logs for more information.")
-	}
+	successCount := len(successStocks)
+	errorCount := len(errorStocks)
 
 	err := storage.CombineSuccessfulStocks(successStocks, downloadDir, finalOutputDir)
 	if err != nil {
 		log.Fatalf("Error combining successful stocks: %v", err)
 	}
 
-	log.Printf("All tasks completed successfully in %s.", time.Since(start))
+	failedSummary := ""
+	if errorCount > 0 {
+		failedSummary = " Failed stocks: " + strings.Join(errorStocks, ", ") + "."
+	}
+
+	log.Printf(
+		"Run summary: %d stocks succeeded, %d failed.%s Total duration: %s.",
+		successCount,
+		errorCount,
+		failedSummary,
+		time.Since(start),
+	)
 }

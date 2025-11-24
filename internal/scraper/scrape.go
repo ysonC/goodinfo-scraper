@@ -25,6 +25,10 @@ func ScrapeAllStocks(
 		totalTypes   = len(scraperTypes)
 	)
 
+	for _, stock := range stocks {
+		successCount[stock] = 0
+	}
+
 	sem := make(chan struct{}, maxWorkers)
 
 	for _, stock := range stocks {
