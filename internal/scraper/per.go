@@ -6,18 +6,15 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-// PERScraper implements the scraper for PER data.
 type PERScraper struct {
 	base *BaseScraper
 }
 
-// NewPERScraper returns a new PERScraper.
 func NewPERScraper(pw *playwright.Playwright) *PERScraper {
 	base := NewBaseScraper(pw)
 	return &PERScraper{base: base}
 }
 
-// Scrape fetches the PER data by building the URL and parsing the table HTML.
 func (p *PERScraper) Scrape(stockNumber, startDate, endDate string) ([][]string, error) {
 	url := fmt.Sprintf(
 		"https://goodinfo.tw/tw/ShowK_ChartFlow.asp?RPT_CAT=PER&STOCK_ID=%s&CHT_CAT=WEEK&PRICE_ADJ=F&START_DT=%s&END_DT=%s",

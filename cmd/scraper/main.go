@@ -25,8 +25,16 @@ func main() {
 	maxWorkersFlag := flag.Int("workers", 10, "maximum number of concurrent workers (default 10)")
 	flag.IntVar(maxWorkersFlag, "w", 10, "shorthand for -workers")
 
-	startDateFlag := flag.String("start", "", "start date in YYYY-MM-DD (default 1965-01-01 when omitted together with -end)")
-	endDateFlag := flag.String("end", "", "end date in YYYY-MM-DD (default today when omitted together with -start)")
+	startDateFlag := flag.String(
+		"start",
+		"",
+		"start date in YYYY-MM-DD (default 1965-01-01 when omitted together with -end)",
+	)
+	endDateFlag := flag.String(
+		"end",
+		"",
+		"end date in YYYY-MM-DD (default today when omitted together with -start)",
+	)
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [options]\n\n", os.Args[0])
@@ -65,7 +73,7 @@ Examples:
 	pw := flow.SetupPlaywright()
 	defer pw.Stop()
 
-	scraperTypes := []string{"per", "stockdata", "monthlyrevenue", "cashflow"}
+	scraperTypes := []string{"per", "stockdata", "monthlyrevenue", "cashflow", "equity"}
 
 	downloadStart := time.Now()
 	successStocks, errorStocks := scraper.ScrapeAllStocks(

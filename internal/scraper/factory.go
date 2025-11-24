@@ -17,6 +17,8 @@ func NewScraper(scraperType string, pw *playwright.Playwright) (Scraper, error) 
 		return NewMonthlyRevenueScraper(pw), nil
 	case "cashflow":
 		return NewCashflowScraper(pw), nil
+	case "equity":
+		return NewEquityScraper(pw), nil
 	default:
 		return nil, fmt.Errorf("unknown scraper type: %s", scraperType)
 	}
