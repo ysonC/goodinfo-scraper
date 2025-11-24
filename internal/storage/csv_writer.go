@@ -125,6 +125,10 @@ func combineAllCSVInFolder(folderPath, finalOutput string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read cashflow.csv: %v", err)
 	}
+	equityData, err := ReadCSV(folderPath + "/equity.csv")
+	if err != nil {
+		return fmt.Errorf("failed to read equity.csv: %v", err)
+	}
 
 	// Add headers to the data
 	perData, err = addPERHeaderNew(perData)
@@ -143,6 +147,10 @@ func combineAllCSVInFolder(folderPath, finalOutput string) error {
 	if err != nil {
 		return fmt.Errorf("failed to add header to cashflow data: %v", err)
 	}
+	equityData, err = addEquityHeader(equityData)
+	if err != nil {
+		return fmt.Errorf("failed to add header to equity data: %v", err)
+	}
 
 	mergedData, err := mergeCSVData(perData, stockData)
 	if err != nil {
@@ -155,6 +163,10 @@ func combineAllCSVInFolder(folderPath, finalOutput string) error {
 	mergedData, err = mergeCSVData(mergedData, cashflowData)
 	if err != nil {
 		return fmt.Errorf("failed to merge cashflow data: %v", err)
+	}
+	mergedData, err = mergeCSVData(mergedData, equityData)
+	if err != nil {
+		return fmt.Errorf("failed to merge equity data: %v", err)
 	}
 
 	// Write the final finalOutput
@@ -422,6 +434,45 @@ func addCashflowHeader(data [][]string) ([][]string, error) {
 			"期末餘額",
 			"現金流量(%)",
 			"稅後EPS(元)",
+		},
+	}
+	return append(header, data...), nil
+}
+
+func addEquityHeader(data [][]string) ([][]string, error) {
+	header := [][]string{
+		{
+			"",
+			"",
+			"",
+			"當週股價",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+		},
+		{
+			"週別",
+			"統計日期",
+			"收盤",
+			"漲跌(元)",
+			"漲跌(%)",
+			"集保庫存(萬張)",
+			"≦10張",
+			">10張≦50張",
+			">50張≦100張",
+			">100張≦200張",
+			">200張≦400張",
+			">400張≦800張",
+			">800張≦1000張",
+			">1000張",
 		},
 	}
 	return append(header, data...), nil
