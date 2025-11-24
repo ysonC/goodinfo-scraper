@@ -45,7 +45,8 @@ func (b *BaseScraper) fetchHTML(url string) (string, error) {
 
 	tableLocator := page.Locator("#tblDetail")
 	if err := tableLocator.WaitFor(playwright.LocatorWaitForOptions{
-		Timeout: playwright.Float(100),
+		State:   playwright.WaitForSelectorStateVisible,
+		Timeout: playwright.Float(10000),
 	}); err != nil {
 		return "", fmt.Errorf("failed to get table HTML: %w", err)
 	}
