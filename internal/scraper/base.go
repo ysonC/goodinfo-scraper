@@ -24,7 +24,7 @@ func NewBaseScraper(pw *playwright.Playwright) *BaseScraper {
 // and returns the inner HTML of the table element.
 func (b *BaseScraper) fetchHTML(url string) (string, error) {
 	browser, err := b.pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
-		Headless: playwright.Bool(true),
+		Headless: playwright.Bool(false),
 		Args:     []string{"--no-sandbox", "--disable-setuid-sandbox"},
 	})
 	if err != nil {
@@ -38,22 +38,25 @@ func (b *BaseScraper) fetchHTML(url string) (string, error) {
 	}
 
 	if _, err := page.Goto(url, playwright.PageGotoOptions{
-		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
+		// !!CAUTION!! If all stock fail, might be page keep loading ads
+		WaitUntil: playwright.WaitUntilStateNetworkidle,
+		Timeout:   playwright.Float(10000),
 	}); err != nil {
 		return "", fmt.Errorf("failed to goto URL: %w", err)
 	}
 
 	tableLocator := page.Locator("#tblDetail")
-	if err := tableLocator.WaitFor(playwright.LocatorWaitForOptions{
-		State:   playwright.WaitForSelectorStateVisible,
-		Timeout: playwright.Float(10000),
-	}); err != nil {
-		return "", fmt.Errorf("failed to get table HTML: %w", err)
+	count, err := tableLocator.Count()
+	if err != nil {
+		return "", fmt.Errorf("table query failed: %w", err)
+	}
+	if count == 0 {
+		return "", fmt.Errorf("no tblDetail table found; skipping")
 	}
 
 	html, err := tableLocator.InnerHTML()
 	if err != nil {
-		return "", fmt.Errorf("failed to get table HTML: %w", err)
+		return "", fmt.Errorf("failed to get inner HTML: %w", err)
 	}
 	return html, nil
 }
