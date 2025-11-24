@@ -15,6 +15,7 @@ fi
 zipDate="$1"
 rawZip="raw-${zipDate}.zip"
 combinedZip="combined-${zipDate}.zip"
+mkdir $zipDate
 
 if [[ ! -d "downloaded_stock" ]]; then
   echo "downloaded_stock directory not found"
@@ -32,4 +33,8 @@ echo "Done."
 
 echo "Creating ${combinedZip} from final_output..."
 zip -r -q "${combinedZip}" final_output
+echo "Done."
+
+echo "Moving files to date folder..."
+mv $rawZip $combinedZip $zipDate
 echo "Done."
