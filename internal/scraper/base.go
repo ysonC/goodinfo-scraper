@@ -38,25 +38,22 @@ func (b *BaseScraper) fetchHTML(url string) (string, error) {
 	}
 
 	if _, err := page.Goto(url, playwright.PageGotoOptions{
-		// !!CAUTION!! If all stock fail, might be page keep loading ads
-		WaitUntil: playwright.WaitUntilStateNetworkidle,
-		Timeout:   playwright.Float(10000),
+		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 	}); err != nil {
 		return "", fmt.Errorf("failed to goto URL: %w", err)
 	}
 
 	tableLocator := page.Locator("#tblDetail")
-	count, err := tableLocator.Count()
-	if err != nil {
-		return "", fmt.Errorf("table query failed: %w", err)
-	}
-	if count == 0 {
-		return "", fmt.Errorf("no tblDetail table found; skipping")
+	if err := tableLocator.WaitFor(playwright.LocatorWaitForOptions{
+		State:   playwright.WaitForSelectorStateVisible,
+		Timeout: playwright.Float(10000),
+	}); err != nil {
+		return "", fmt.Errorf("failed to get table HTML: %w", err)
 	}
 
 	html, err := tableLocator.InnerHTML()
 	if err != nil {
-		return "", fmt.Errorf("failed to get inner HTML: %w", err)
+		return "", fmt.Errorf("failed to get table HTML: %w", err)
 	}
 	return html, nil
 }
