@@ -15,26 +15,31 @@ fi
 zipDate="$1"
 rawZip="raw-${zipDate}.zip"
 combinedZip="combined-${zipDate}.zip"
-mkdir $zipDate
+dataDir="data"
+rawDir="${dataDir}/downloaded_stock"
+finalDir="${dataDir}/final_output"
+archiveDir="${dataDir}/archives/${zipDate}"
 
-if [[ ! -d "downloaded_stock" ]]; then
-  echo "downloaded_stock directory not found"
+mkdir -p "${archiveDir}"
+
+if [[ ! -d "${rawDir}" ]]; then
+  echo "${rawDir} directory not found"
   exit 1
 fi
 
-if [[ ! -d "final_output" ]]; then
-  echo "final_output directory not found"
+if [[ ! -d "${finalDir}" ]]; then
+  echo "${finalDir} directory not found"
   exit 1
 fi
 
-echo "Creating ${rawZip} from downloaded_stock..."
-zip -r -q "${rawZip}" downloaded_stock
+echo "Creating ${rawZip} from ${rawDir}..."
+zip -r -q "${rawZip}" "${rawDir}"
 echo "Done."
 
-echo "Creating ${combinedZip} from final_output..."
-zip -r -q "${combinedZip}" final_output
+echo "Creating ${combinedZip} from ${finalDir}..."
+zip -r -q "${combinedZip}" "${finalDir}"
 echo "Done."
 
-echo "Moving files to date folder..."
-mv $rawZip $combinedZip $zipDate
+echo "Moving files to archive folder..."
+mv "${rawZip}" "${combinedZip}" "${archiveDir}"
 echo "Done."

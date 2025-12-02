@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -13,11 +14,13 @@ import (
 	"github.com/ysonC/multi-stocks-download/internal/storage"
 )
 
-const (
-	inputDir       = "input_stock"
-	downloadDir    = "downloaded_stock"
-	finalOutputDir = "final_output"
-	failedDir      = "failed_stock"
+const dataDir = "data"
+
+var (
+	inputDir       = filepath.Join(dataDir, "input_stock")
+	downloadDir    = filepath.Join(dataDir, "downloaded_stock")
+	finalOutputDir = filepath.Join(dataDir, "final_output")
+	failedDir      = filepath.Join(dataDir, "failed_stock")
 )
 
 func main() {

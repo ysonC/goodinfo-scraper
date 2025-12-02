@@ -35,8 +35,11 @@ COPY --from=builder /go/bin/playwright /usr/local/bin/playwright
 
 
 # Prepare mount points and permissions for pwuser (provided by base image)
-RUN mkdir -p /app/downloaded_stock /app/final_output /app/input_stock \
+RUN mkdir -p /app/data/downloaded_stock /app/data/final_output /app/data/input_stock /app/data/failed_stock \
  && chown -R pwuser:pwuser /app
+
+# Preload inputstock
+COPY resources/stocks.txt /app/data/input_stock/stocks.txt
 
 # Install the Playwright-Go driver (tiny) against preinstalled browsers
 USER pwuser
@@ -44,4 +47,3 @@ ENV HOME=/home/pwuser
 RUN playwright install
 
 ENTRYPOINT ["/app/scraper"]
-

@@ -9,8 +9,8 @@ A Go-based web scraper that collects various financial data—including weekly s
 - **Data Types**: Scrapes PER, stock data, monthly revenue, and cash flow.
 - **Dynamic Web Scraping**: Uses headless browsers via [Playwright-Go](https://github.com/playwright-community/playwright-go).
 - **Structured Output**:  
-  - **CSV Files**: Saved per stock in the `downloaded_stock/` directory (one subfolder per stock).  
-  - **XLSX Files**: Final combined spreadsheets stored in the `final_output/` directory (one per stock).
+  - **CSV Files**: Saved per stock in `data/downloaded_stock/` (one subfolder per stock).  
+  - **XLSX Files**: Final combined spreadsheets stored in `data/final_output/` (one per stock).
 
 ## Project Structure
 
@@ -18,6 +18,11 @@ A Go-based web scraper that collects various financial data—including weekly s
 .
 ├── Dockerfile
 ├── README.md
+├── data
+│   ├── downloaded_stock/   # per-stock CSV outputs (one folder per stock)
+│   ├── final_output/       # combined CSV/XLSX per stock
+│   ├── failed_stock/       # last run's failed stock list
+│   └── input_stock/        # stock-number inputs (one per line)
 ├── cmd
 │   └── scraper
 │       └── main.go
@@ -41,11 +46,13 @@ A Go-based web scraper that collects various financial data—including weekly s
 │   │   └── stockdata.go
 │   └── storage
 │       └── csv_writer.go
+├── resources
+└── scripts
 ```
 
-- **`input_stock/`**: Place files here that contain stock numbers (one per line).
-- **`downloaded_stock/`**: CSV output is saved here for each stock in its own subfolder.
-- **`final_output/`**: Final XLSX output for each stock is generated here by combining CSV files.
+- **`data/input_stock/`**: Place files here that contain stock numbers (one per line).
+- **`data/downloaded_stock/`**: CSV output is saved here for each stock in its own subfolder.
+- **`data/final_output/`**: Final XLSX output for each stock is generated here by combining CSV files.
 
 ## Local Installation
 
@@ -82,8 +89,8 @@ You will be prompted to:
 - Specify the date range (either default or custom).
 
 After scraping completes:
-- **CSV files** for each stock are saved under `downloaded_stock/` (each stock has its own subfolder).
-- A **final XLSX file** is generated per stock in `final_output/`, combining the CSV data into multiple sheets.
+- **CSV files** for each stock are saved under `data/downloaded_stock/` (each stock has its own subfolder).
+- A **final XLSX file** is generated per stock in `data/final_output/`, combining the CSV data into multiple sheets.
 
 ## Docker Usage
 
@@ -97,13 +104,26 @@ docker build -t my-scraper .
 
 ```bash
 docker run -it --rm \
-  -v "$(pwd)/downloaded_stock:/app/downloaded_stock" \
-  -v "$(pwd)/final_output:/app/final_output" \
-  -v "$(pwd)/input_stock:/app/input_stock" \
+  -v "$(pwd)/data/downloaded_stock:/app/data/downloaded_stock" \
+  -v "$(pwd)/data/final_output:/app/data/final_output" \
+  -v "$(pwd)/data/input_stock:/app/data/input_stock" \
   my-scraper
 ```
 
 Adjust the volume mounts if your local directories differ.
+
+### Preloading input stocks in Docker
+
+- The image copies `resources/stocks.txt` into `/app/data/input_stock/stocks.txt` by default, so a fresh container already has a starter list.
+- To use your own list instead, mount a file into the same location:
+
+```bash
+docker run -it --rm \
+  -v "$(pwd)/path/to/your_stocks.txt:/app/data/input_stock/stocks.txt" \
+  -v "$(pwd)/data/downloaded_stock:/app/data/downloaded_stock" \
+  -v "$(pwd)/data/final_output:/app/data/final_output" \
+  my-scraper
+```
 
 ## Customizing Concurrency
 

@@ -1,6 +1,7 @@
 output_stock
 test-results
 .DS_Store
+data/
 downloaded_stock
 final_output
 playground.go
