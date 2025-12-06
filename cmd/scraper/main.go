@@ -27,8 +27,8 @@ func main() {
 	log.Println("Starting scraper application...")
 	start := time.Now()
 
-	maxWorkersFlag := flag.Int("workers", 10, "maximum number of concurrent workers (default 10)")
-	flag.IntVar(maxWorkersFlag, "w", 10, "shorthand for -workers")
+	maxWorkersFlag := flag.Int("workers", 5, "maximum number of concurrent workers (default 5)")
+	flag.IntVar(maxWorkersFlag, "w", 5, "shorthand for -workers")
 	rerunFailedFlag := flag.Bool(
 		"rerun-failed",
 		false,
